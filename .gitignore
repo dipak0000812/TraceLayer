@@ -1,0 +1,41 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Go
+bin/
+*.exe
+*.test
+*.out
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+dist/
+
+# Logs
+*.log
+
+# Local database volumes
+postgres-data/
+neo4j-data/
+
+# Generated artifacts
+artifacts/
+reports/
