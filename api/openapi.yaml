@@ -1,0 +1,421 @@
+openapi: "3.0.3"
+info:
+  title: TraceLayer API
+  version: "1.0.0"
+  description: |
+    TraceLayer Round-2 forensic evidence-correlation API.
+    SIH Problem Statement SIH26146 - offline Bitcoin transaction network analysis.
+
+    EPISTEMIC BOUNDARY: This system produces investigative leads for human analyst
+    review. It does NOT identify individuals, guarantee wallet ownership, or produce
+    calibrated probabilities. Peer IP observations indicate propagation relay, NOT
+    transaction origin. Address clustering is heuristic, NOT identity proof.
+  contact:
+    name: TraceLayer Team
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+tags:
+  - name: health
+  - name: ingestion
+  - name: transactions
+  - name: entities
+  - name: detection
+  - name: evidence
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Service health check
+      tags: [health]
+      responses:
+        "200":
+          description: All services healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: One or more services degraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /ingest/bulk:
+    post:
+      operationId: ingestBulk
+      summary: Ingest combined bulk dataset (14 PS fields incl geo_country, asn)
+      description: |
+        Accepts data/raw/bitcoin_traffic.csv or its JSON equivalent.
+        Partial batch tolerance: valid records accepted; invalid records written to rejection_log.
+      tags: [ingestion]
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+              format: binary
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/BulkRecord"
+      responses:
+        "200":
+          description: Batch accepted (may include partial rejections)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchSummary"
+        "400":
+          description: Request-level validation failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /ingest/transactions:
+    post:
+      operationId: ingestTransactions
+      summary: Ingest blockchain transaction records only (11 fields, no geo)
+      tags: [ingestion]
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+              format: binary
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/TransactionRaw"
+      responses:
+        "200":
+          description: Batch accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchSummary"
+        "400":
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /ingest/network:
+    post:
+      operationId: ingestNetwork
+      summary: Ingest network observation records only (10 fields, no geo)
+      tags: [ingestion]
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+              format: binary
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/NetworkObservationRaw"
+      responses:
+        "200":
+          description: Batch accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchSummary"
+        "400":
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /batches/{batch_id}:
+    get:
+      operationId: getBatch
+      summary: Get ingestion batch status
+      tags: [ingestion]
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Batch status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchStatus"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /batches/{batch_id}/rejections:
+    get:
+      operationId: getBatchRejections
+      summary: Get rejection log for an ingestion batch
+      tags: [ingestion]
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Rejection list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RejectionList"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /transactions/{txid}:
+    get:
+      operationId: getTransaction
+      summary: Get transaction detail with network observations and correlation stats
+      tags: [transactions]
+      parameters:
+        - name: txid
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9a-f]{64}$"
+      responses:
+        "200":
+          description: Transaction detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /entities:
+    get:
+      operationId: listEntities
+      summary: List entities ranked by detection scores
+      tags: [entities]
+      parameters:
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [chain_anomaly_score, fused_score, rank_shift]
+            default: fused_score
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: run_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated entity list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityList"
+  /entities/{entity_id}:
+    get:
+      operationId: getEntity
+      summary: Get entity detail with detection scores
+      tags: [entities]
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: run_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /detection/run:
+    post:
+      operationId: runDetection
+      summary: Trigger AI/ML detection run (returns 202 immediately)
+      tags: [detection]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DetectionRequest"
+      responses:
+        "202":
+          description: Detection run accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetectionRunTicket"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /detection/results:
+    get:
+      operationId: getDetectionResults
+      summary: Get results for a detection run
+      tags: [detection]
+      parameters:
+        - name: run_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Detection results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetectionResultList"
+        "404":
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /evidence/subgraph/{entity_id}:
+    get:
+      operationId: getEvidenceSubgraph
+      summary: Get Cytoscape.js evidence subgraph for an entity
+      tags: [evidence]
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: hops
+          in: query
+          schema:
+            type: integer
+            default: 2
+            minimum: 1
+            maximum: 3
+      responses:
+        "200":
+          description: Cytoscape.js adjacency JSON
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CytoscapeGraph"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /evidence/compare/{entity_id}:
+    get:
+      operationId: compareEvidence
+      summary: Full evidence card with rank shift and fusion decomposition
+      tags: [evidence]
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: run_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Evidence comparison card
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceComparison"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
