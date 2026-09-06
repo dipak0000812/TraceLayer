@@ -13,12 +13,12 @@ import (
 )
 
 var requiredNetworkColumns = []string{
-	"observation_id", "observed_txid", "timestamp", "src_ip", "dst_ip",
+	"observation_id", "txid", "timestamp", "src_ip", "dst_ip",
 	"src_port", "dst_port", "provenance", "dataset_id", "generator_version",
 }
 
 // ParseNetworkObservationsCSV streams network_observations.csv per
-// DATA_CONTRACT.md §2.2. observed_txid is NOT checked against the
+// DATA_CONTRACT.md §2.2. txid is NOT checked against the
 // transactions table here — network ingestion is decoupled from blockchain
 // ingestion by design; that join is the correlation engine's job (Phase 5).
 // Malformed/invalid rows are collected as rejections, matching the
@@ -103,7 +103,7 @@ func parseNetworkObservationRow(record []string, col map[string]int) (domain.Net
 
 	return domain.NetworkObservation{
 		ObservationID:     get("observation_id"),
-		ObservedTXID:      get("observed_txid"),
+		ObservedTXID:      get("txid"),
 		ObservedAt:        observedAt,
 		SrcIP:             srcIP,
 		DstIP:             dstIP,

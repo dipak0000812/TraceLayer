@@ -8,7 +8,7 @@ import (
 	"github.com/dipak0000812/TraceLayer/internal/domain"
 )
 
-const netHeader = "observation_id,observed_txid,timestamp,src_ip,dst_ip,src_port,dst_port,provenance,dataset_id,generator_version\n"
+const netHeader = "observation_id,txid,timestamp,src_ip,dst_ip,src_port,dst_port,provenance,dataset_id,generator_version\n"
 
 func TestParseNetworkObservationsCSV_ValidRow(t *testing.T) {
 	row := `OBS-aaaaaaaaaaaaaaaaaaaaaaaa,b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b,2025-03-22T20:27:05Z,203.0.113.10,198.51.100.20,18333,8333,SYNTHETIC,6bc084b677a63411,1.0.0` + "\n"
