@@ -1,0 +1,1185 @@
+[
+  {
+    "scenario_id": "SCN-00001",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b"
+    ],
+    "ground_truth_entity_ids": [
+      "E0000"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0000"
+        ]
+      }
+    ],
+    "network_condition": {
+      "b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b": "NETWORK_DELAYED"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00002",
+    "scenario_type": "HIGH_ACTIVITY",
+    "txids": [
+      "9e752d5ae640e33b1ea420bb782e7b59617465516801b8d0599378e4694917d2",
+      "46896eb1d020e3d251c5fd838a20fe092b4539ae2318a9a0cfa6f21fb1ee7259",
+      "ae58cd4f0cf11ba6c3ab017af570712efc8c85ff2f0e8db313450cebd8174998",
+      "6042e31ebde73ab2c35c292d942fd412cd20ad5f69b7c4cd1d8a0d51df718ed9",
+      "f302db5c2e822241c2ae74bf3afa0c6ea3c97e0959c283d38a82645716969338",
+      "1d812c028246c3a7ab9f8ec9282b8ec34e80aec524360def970dbab4ddacea57",
+      "b3a69147f4176bae49ceccc84c49e9bd6a6a1e8d1d780dcfcfdd3e6f76173453",
+      "62fcb6a924db18ff1897fd00a6f78aa8035bee712bfdc3f5c9da33528d9d15ee",
+      "6558fcbc744796243f15d670a2f46d82b9db0bbf1975f75573da5505389e78f7"
+    ],
+    "ground_truth_entity_ids": [
+      "E0013"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0013"
+        ]
+      },
+      {
+        "type": "burst_activity",
+        "entity_id": "E0013",
+        "count": 9
+      }
+    ],
+    "network_condition": {
+      "9e752d5ae640e33b1ea420bb782e7b59617465516801b8d0599378e4694917d2": "NETWORK_STRONG",
+      "46896eb1d020e3d251c5fd838a20fe092b4539ae2318a9a0cfa6f21fb1ee7259": "NETWORK_STRONG",
+      "ae58cd4f0cf11ba6c3ab017af570712efc8c85ff2f0e8db313450cebd8174998": "NETWORK_STRONG",
+      "6042e31ebde73ab2c35c292d942fd412cd20ad5f69b7c4cd1d8a0d51df718ed9": "NETWORK_ABSENT",
+      "f302db5c2e822241c2ae74bf3afa0c6ea3c97e0959c283d38a82645716969338": "NETWORK_STRONG",
+      "1d812c028246c3a7ab9f8ec9282b8ec34e80aec524360def970dbab4ddacea57": "NETWORK_SPARSE",
+      "b3a69147f4176bae49ceccc84c49e9bd6a6a1e8d1d780dcfcfdd3e6f76173453": "NETWORK_STRONG",
+      "62fcb6a924db18ff1897fd00a6f78aa8035bee712bfdc3f5c9da33528d9d15ee": "NETWORK_CONFLICTING",
+      "6558fcbc744796243f15d670a2f46d82b9db0bbf1975f75573da5505389e78f7": "NETWORK_STRONG"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00003",
+    "scenario_type": "CUSTODIAL_CONSOLIDATION",
+    "txids": [
+      "9aa9aa7093fb9d491ba0ee13d4b01727b45cde7e19d9d1b36b70b80f5cb79d59"
+    ],
+    "ground_truth_entity_ids": [
+      "E0011",
+      "E0019",
+      "E0008",
+      "E0001",
+      "E0014",
+      "E0017",
+      "E0016",
+      "E0006",
+      "E0002"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0011",
+          "E0019",
+          "E0008",
+          "E0001",
+          "E0014",
+          "E0017",
+          "E0016",
+          "E0006",
+          "E0002"
+        ]
+      },
+      {
+        "type": "consolidation",
+        "source_entity_ids": [
+          "E0011",
+          "E0019",
+          "E0008",
+          "E0001",
+          "E0014",
+          "E0017",
+          "E0016",
+          "E0006"
+        ],
+        "sink_entity_id": "E0002"
+      }
+    ],
+    "network_condition": {
+      "9aa9aa7093fb9d491ba0ee13d4b01727b45cde7e19d9d1b36b70b80f5cb79d59": "NETWORK_DELAYED"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00004",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "f1881bc48b569dc6ff08e355a643fba7c49cae2d52e285f68481573666f7542f"
+    ],
+    "ground_truth_entity_ids": [
+      "E0017"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0017"
+        ]
+      }
+    ],
+    "network_condition": {
+      "f1881bc48b569dc6ff08e355a643fba7c49cae2d52e285f68481573666f7542f": "NETWORK_CONFLICTING"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00005",
+    "scenario_type": "UNUSUAL_TRANSACTION_STRUCTURE",
+    "txids": [
+      "feb1bb6a60158e3f768bbc2c91de80eb973519bdf99ead955de19b46f4b7bb96"
+    ],
+    "ground_truth_entity_ids": [
+      "E0019"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0019"
+        ]
+      }
+    ],
+    "network_condition": {
+      "feb1bb6a60158e3f768bbc2c91de80eb973519bdf99ead955de19b46f4b7bb96": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00006",
+    "scenario_type": "UNUSUAL_VALUE_FLOW",
+    "txids": [
+      "da3b4ac630bdf519df4cac2e200ff7c09954f5d8507cba038facf297bafe75c7"
+    ],
+    "ground_truth_entity_ids": [
+      "E0018"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0018"
+        ]
+      }
+    ],
+    "network_condition": {
+      "da3b4ac630bdf519df4cac2e200ff7c09954f5d8507cba038facf297bafe75c7": "NETWORK_DELAYED"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00007",
+    "scenario_type": "PEELING_CHAIN",
+    "txids": [
+      "ee6741444a64a781d899832dda80f029a0e0a1aaae00827bceab4580b91f1a10",
+      "605a7b84f4e86aae49deeae9bc310411b1dddfdac73c9cc662df578b871ae887",
+      "d9e807077ed2b0fea1e91fa8a37f9265e667f2a051fdc87c6131ad3ec443acdc",
+      "db762a844a78e4032f6c8ad0fa969ae13c573566cfa2a58e9d233526af53e1b9",
+      "afcb1060b013d92e4ac3099306c3996a6d33654b951e7328f3f617cdb67687cf"
+    ],
+    "ground_truth_entity_ids": [
+      "E0002"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0002"
+        ]
+      },
+      {
+        "type": "peeling_chain",
+        "entity_id": "E0002",
+        "length": 5
+      }
+    ],
+    "network_condition": {
+      "ee6741444a64a781d899832dda80f029a0e0a1aaae00827bceab4580b91f1a10": "NETWORK_NOISY",
+      "605a7b84f4e86aae49deeae9bc310411b1dddfdac73c9cc662df578b871ae887": "NETWORK_SPARSE",
+      "d9e807077ed2b0fea1e91fa8a37f9265e667f2a051fdc87c6131ad3ec443acdc": "NETWORK_DELAYED",
+      "db762a844a78e4032f6c8ad0fa969ae13c573566cfa2a58e9d233526af53e1b9": "NETWORK_DELAYED",
+      "afcb1060b013d92e4ac3099306c3996a6d33654b951e7328f3f617cdb67687cf": "NETWORK_DELAYED"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00008",
+    "scenario_type": "PEELING_CHAIN",
+    "txids": [
+      "dbce1fee850e64bec73b3c63e08d2fe1804564b08ce974be81fba9f2fb4d5f3e",
+      "1bffd79024bbea290def1066941fe4920ebf123b03050b37a15cda481db42bd7",
+      "ccf9339e83ee9d35c613fa5cf71a248cca77fdfd469ff58c82f9653abd59bf85",
+      "87958d501ec4526ed93dbd4fe362e29600140964b93d1b75bfddf3c71094d17d",
+      "fa9d96a849d1393bb1faf47fb0d5d95244149ce4434925b2a30b1f66215460aa",
+      "c4aa1eb77be4a61e0b0f2b89ab7e540c764f58f0dfea18b5888903ab29595c6b",
+      "3415c28ff06dcf51abd6c0ec9ed7185b318ae34ba09b30fb95614c91d4fc3d41"
+    ],
+    "ground_truth_entity_ids": [
+      "E0003"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0003"
+        ]
+      },
+      {
+        "type": "peeling_chain",
+        "entity_id": "E0003",
+        "length": 7
+      }
+    ],
+    "network_condition": {
+      "dbce1fee850e64bec73b3c63e08d2fe1804564b08ce974be81fba9f2fb4d5f3e": "NETWORK_NOISY",
+      "1bffd79024bbea290def1066941fe4920ebf123b03050b37a15cda481db42bd7": "NETWORK_CONFLICTING",
+      "ccf9339e83ee9d35c613fa5cf71a248cca77fdfd469ff58c82f9653abd59bf85": "NETWORK_ABSENT",
+      "87958d501ec4526ed93dbd4fe362e29600140964b93d1b75bfddf3c71094d17d": "NETWORK_SPARSE",
+      "fa9d96a849d1393bb1faf47fb0d5d95244149ce4434925b2a30b1f66215460aa": "NETWORK_DELAYED",
+      "c4aa1eb77be4a61e0b0f2b89ab7e540c764f58f0dfea18b5888903ab29595c6b": "NETWORK_NOISY",
+      "3415c28ff06dcf51abd6c0ec9ed7185b318ae34ba09b30fb95614c91d4fc3d41": "NETWORK_STRONG"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00009",
+    "scenario_type": "UNUSUAL_TRANSACTION_STRUCTURE",
+    "txids": [
+      "161446e41a7375f13577414faa68b7707f11921192e9de0c96c3760838af0316"
+    ],
+    "ground_truth_entity_ids": [
+      "E0006"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0006"
+        ]
+      }
+    ],
+    "network_condition": {
+      "161446e41a7375f13577414faa68b7707f11921192e9de0c96c3760838af0316": "NETWORK_STRONG"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00010",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "59f9961964d139f421b5ead0289dd8b2cdda296767f8dd7fb47b8d96f2d2b67d"
+    ],
+    "ground_truth_entity_ids": [
+      "E0006"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0006"
+        ]
+      }
+    ],
+    "network_condition": {
+      "59f9961964d139f421b5ead0289dd8b2cdda296767f8dd7fb47b8d96f2d2b67d": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00011",
+    "scenario_type": "COINJOIN_LIKE",
+    "txids": [
+      "b0c9e1e46b44ae9a7ec482ca358a10a8e524a745e5063e3e0aaea488b48ae7ac"
+    ],
+    "ground_truth_entity_ids": [
+      "E0010",
+      "E0006",
+      "E0015",
+      "E0012",
+      "E0014"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0010",
+          "E0006",
+          "E0015",
+          "E0012",
+          "E0014"
+        ]
+      },
+      {
+        "type": "coinjoin_group",
+        "entity_ids": [
+          "E0010",
+          "E0006",
+          "E0015",
+          "E0012",
+          "E0014"
+        ]
+      }
+    ],
+    "network_condition": {
+      "b0c9e1e46b44ae9a7ec482ca358a10a8e524a745e5063e3e0aaea488b48ae7ac": "NETWORK_CONFLICTING"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00012",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "e3bb881084917ee07fdce00f1fc2a732eb45ae4130a77e255e3e619cdf943e39"
+    ],
+    "ground_truth_entity_ids": [
+      "E0017"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0017"
+        ]
+      }
+    ],
+    "network_condition": {
+      "e3bb881084917ee07fdce00f1fc2a732eb45ae4130a77e255e3e619cdf943e39": "NETWORK_STRONG"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00013",
+    "scenario_type": "HIGH_ACTIVITY",
+    "txids": [
+      "86534bc5bb166ff54b3c4edac79282b15bdc0036a797170a0263a745671949b9",
+      "7aa63e35950a2c3248729554659c05030ad3cbef13cba759654f551553ae6cc8",
+      "18eb590ca296577480adcf0129a6359b6a634ca75eb68f5b261fc3814c411d64",
+      "9867f67ebfaa0f6ac31ce6bdc0db750a847f46a76c2febe161fa6dfc857cace8",
+      "f54da8e6461392cde2a8b139c7d5fb6284013f324148415ea2a3c7c3984aee7a",
+      "0a55a5dbbaea501b1eb48aecde5410fa26adca714d8193f61473724d7f716249"
+    ],
+    "ground_truth_entity_ids": [
+      "E0018"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0018"
+        ]
+      },
+      {
+        "type": "burst_activity",
+        "entity_id": "E0018",
+        "count": 6
+      }
+    ],
+    "network_condition": {
+      "86534bc5bb166ff54b3c4edac79282b15bdc0036a797170a0263a745671949b9": "NETWORK_NOISY",
+      "7aa63e35950a2c3248729554659c05030ad3cbef13cba759654f551553ae6cc8": "NETWORK_CONFLICTING",
+      "18eb590ca296577480adcf0129a6359b6a634ca75eb68f5b261fc3814c411d64": "NETWORK_CONFLICTING",
+      "9867f67ebfaa0f6ac31ce6bdc0db750a847f46a76c2febe161fa6dfc857cace8": "NETWORK_ABSENT",
+      "f54da8e6461392cde2a8b139c7d5fb6284013f324148415ea2a3c7c3984aee7a": "NETWORK_ABSENT",
+      "0a55a5dbbaea501b1eb48aecde5410fa26adca714d8193f61473724d7f716249": "NETWORK_ABSENT"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00014",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "a378fc8e69bce391f488f0ae48d882b4a533d72dac465e070020719a7f9e1099"
+    ],
+    "ground_truth_entity_ids": [
+      "E0016"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0016"
+        ]
+      }
+    ],
+    "network_condition": {
+      "a378fc8e69bce391f488f0ae48d882b4a533d72dac465e070020719a7f9e1099": "NETWORK_SPARSE"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00015",
+    "scenario_type": "HIGH_ACTIVITY",
+    "txids": [
+      "304d75826f96214d69b5324e59c370730bcd4e143704e407095ed6ec1c704045",
+      "3256faaed4b6e70adaadc0ab05a382ae8d0f639604bbe104ef7787128db704df",
+      "7831d67e4810e981b015340fcaeac894dc3ed56b6b3e11a28b50eb9e1ccc4e28",
+      "c6e768e310c89ca9e20b65056ebb84b3c2d0dd99918441a7358d84ecabd31a17",
+      "7b5bd3011c31fd4ad770b090b52b0c7940a70a8eaa1b707693243a2eecb8dcff",
+      "bb9f3da20d29719a17321a1cd3135e80753a11a352c0ad805717569b7f9ed4b8",
+      "b923c7ff34e5de66ebcb1d952d5cc55abc952db7f232f70b9e54ad23b7e2266b",
+      "79a89e6f9eed3545a4ce70a819151627513c1bfe47081f97b3adc48fc2710ab9",
+      "28e1da54adee8d3da818f295765af90da8fa76695e94437d04371c47b3994d63",
+      "a4f7116ae881c0d44ddcdb20a86c9fb4c316095ca3d32f0aa4c78942961bf73a"
+    ],
+    "ground_truth_entity_ids": [
+      "E0002"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0002"
+        ]
+      },
+      {
+        "type": "burst_activity",
+        "entity_id": "E0002",
+        "count": 10
+      }
+    ],
+    "network_condition": {
+      "304d75826f96214d69b5324e59c370730bcd4e143704e407095ed6ec1c704045": "NETWORK_SPARSE",
+      "3256faaed4b6e70adaadc0ab05a382ae8d0f639604bbe104ef7787128db704df": "NETWORK_NOISY",
+      "7831d67e4810e981b015340fcaeac894dc3ed56b6b3e11a28b50eb9e1ccc4e28": "NETWORK_SPARSE",
+      "c6e768e310c89ca9e20b65056ebb84b3c2d0dd99918441a7358d84ecabd31a17": "NETWORK_STRONG",
+      "7b5bd3011c31fd4ad770b090b52b0c7940a70a8eaa1b707693243a2eecb8dcff": "NETWORK_STRONG",
+      "bb9f3da20d29719a17321a1cd3135e80753a11a352c0ad805717569b7f9ed4b8": "NETWORK_SPARSE",
+      "b923c7ff34e5de66ebcb1d952d5cc55abc952db7f232f70b9e54ad23b7e2266b": "NETWORK_CONFLICTING",
+      "79a89e6f9eed3545a4ce70a819151627513c1bfe47081f97b3adc48fc2710ab9": "NETWORK_DELAYED",
+      "28e1da54adee8d3da818f295765af90da8fa76695e94437d04371c47b3994d63": "NETWORK_CONFLICTING",
+      "a4f7116ae881c0d44ddcdb20a86c9fb4c316095ca3d32f0aa4c78942961bf73a": "NETWORK_CONFLICTING"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00016",
+    "scenario_type": "COINJOIN_LIKE",
+    "txids": [
+      "76d4a7bd44b6369cdc14be290c0dc43e2cb46cb206bf8a61cbece3ad68659bc4"
+    ],
+    "ground_truth_entity_ids": [
+      "E0014",
+      "E0016",
+      "E0008"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0014",
+          "E0016",
+          "E0008"
+        ]
+      },
+      {
+        "type": "coinjoin_group",
+        "entity_ids": [
+          "E0014",
+          "E0016",
+          "E0008"
+        ]
+      }
+    ],
+    "network_condition": {
+      "76d4a7bd44b6369cdc14be290c0dc43e2cb46cb206bf8a61cbece3ad68659bc4": "NETWORK_CONFLICTING"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00017",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "22af31b81f37da8a48314122f99bdc7e79648f7a9e8452181d81d3e75f55ca55"
+    ],
+    "ground_truth_entity_ids": [
+      "E0017"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0017"
+        ]
+      }
+    ],
+    "network_condition": {
+      "22af31b81f37da8a48314122f99bdc7e79648f7a9e8452181d81d3e75f55ca55": "NETWORK_STRONG"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00018",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "9b770b41049ef421dbd05db4d68d9bc4a44298ffc732ca4358cb6a543f2ce84d"
+    ],
+    "ground_truth_entity_ids": [
+      "E0010"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0010"
+        ]
+      }
+    ],
+    "network_condition": {
+      "9b770b41049ef421dbd05db4d68d9bc4a44298ffc732ca4358cb6a543f2ce84d": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00019",
+    "scenario_type": "PEELING_CHAIN",
+    "txids": [
+      "ef28b8eac2362bd1cffdb9ef09ea754cb906a1a10bad89b9ffd46184c39d1d4b",
+      "fda91197081ab23e8cd45037f0ac7aab56428f65ab4e9338828b6d2fd52c40a5",
+      "fcc3d95f20e61985c6573479a8c38ae94d88fb5b17d0786827d1f8256c54958d",
+      "1f02c74c5813ee57f8cc653c84598a912ce958f038e0fe1e3575dd6c70174696",
+      "07e57cd9ebc25b413ba5715a550581bf0d5a013cdb65be4ddaed94059cfbae2b"
+    ],
+    "ground_truth_entity_ids": [
+      "E0009"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0009"
+        ]
+      },
+      {
+        "type": "peeling_chain",
+        "entity_id": "E0009",
+        "length": 5
+      }
+    ],
+    "network_condition": {
+      "ef28b8eac2362bd1cffdb9ef09ea754cb906a1a10bad89b9ffd46184c39d1d4b": "NETWORK_STRONG",
+      "fda91197081ab23e8cd45037f0ac7aab56428f65ab4e9338828b6d2fd52c40a5": "NETWORK_DELAYED",
+      "fcc3d95f20e61985c6573479a8c38ae94d88fb5b17d0786827d1f8256c54958d": "NETWORK_STRONG",
+      "1f02c74c5813ee57f8cc653c84598a912ce958f038e0fe1e3575dd6c70174696": "NETWORK_ABSENT",
+      "07e57cd9ebc25b413ba5715a550581bf0d5a013cdb65be4ddaed94059cfbae2b": "NETWORK_STRONG"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00020",
+    "scenario_type": "PEELING_CHAIN",
+    "txids": [
+      "a8e2c43173ef15ae3f4a9b7dc9486c7c2822c649b768a49e7d83dbe30e4be7de",
+      "bafc1aeb157d026b77f5357aad75a00d1068b003cda471ad2609f5c42ae66e62",
+      "75e74126b2b9b75c17f92a197b7bc5031429d7ef4f7c8b133c762afeaa021f35",
+      "4d420a73ac94cd5a2ccc5c832795ddf84d093dc940eccf41be763aa086a0526b",
+      "f094b40ac921f151cef59fd270831646a38f425814601ea62720f925ea0dafc1",
+      "6a4cb1f2e600327bf47ed96028294c27093228fd7f356581bcc86a4483e7cb26",
+      "ff66faaecc79afba1e6699741746b1ed9f970db53fcc58d93ff4d9743ec196e4"
+    ],
+    "ground_truth_entity_ids": [
+      "E0016"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0016"
+        ]
+      },
+      {
+        "type": "peeling_chain",
+        "entity_id": "E0016",
+        "length": 7
+      }
+    ],
+    "network_condition": {
+      "a8e2c43173ef15ae3f4a9b7dc9486c7c2822c649b768a49e7d83dbe30e4be7de": "NETWORK_STRONG",
+      "bafc1aeb157d026b77f5357aad75a00d1068b003cda471ad2609f5c42ae66e62": "NETWORK_SPARSE",
+      "75e74126b2b9b75c17f92a197b7bc5031429d7ef4f7c8b133c762afeaa021f35": "NETWORK_STRONG",
+      "4d420a73ac94cd5a2ccc5c832795ddf84d093dc940eccf41be763aa086a0526b": "NETWORK_CONFLICTING",
+      "f094b40ac921f151cef59fd270831646a38f425814601ea62720f925ea0dafc1": "NETWORK_SPARSE",
+      "6a4cb1f2e600327bf47ed96028294c27093228fd7f356581bcc86a4483e7cb26": "NETWORK_NOISY",
+      "ff66faaecc79afba1e6699741746b1ed9f970db53fcc58d93ff4d9743ec196e4": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00021",
+    "scenario_type": "CUSTODIAL_CONSOLIDATION",
+    "txids": [
+      "8afe7cc40230458c5ebe15cc29bccca8f3a8df7240b8bb66f1e20f86525a8bb0"
+    ],
+    "ground_truth_entity_ids": [
+      "E0004",
+      "E0011",
+      "E0005",
+      "E0016",
+      "E0000"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0004",
+          "E0011",
+          "E0005",
+          "E0016",
+          "E0000"
+        ]
+      },
+      {
+        "type": "consolidation",
+        "source_entity_ids": [
+          "E0004",
+          "E0011",
+          "E0005",
+          "E0016"
+        ],
+        "sink_entity_id": "E0000"
+      }
+    ],
+    "network_condition": {
+      "8afe7cc40230458c5ebe15cc29bccca8f3a8df7240b8bb66f1e20f86525a8bb0": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00022",
+    "scenario_type": "PEELING_CHAIN",
+    "txids": [
+      "191fb0ec84781a21bc2f2365ec04601684592a64ddaa55360ed8377a17a25b35",
+      "3bc5db98d84f734fc455b089add11715228b868d8c7625c8f17dfadb8cae7753",
+      "99b6cb0fccf30ce3af1a00e014d3739e9e4205bda0ffa77790f76a5a6e6a7295",
+      "fc59bf4e73384800ce76a2e4ebd5072748d7634d57fc3a10d4082f60eb100bb9",
+      "19ef79cb0c76ebed21ac0422800226a1b2914763a4c0a845675c872925feb6ed"
+    ],
+    "ground_truth_entity_ids": [
+      "E0019"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0019"
+        ]
+      },
+      {
+        "type": "peeling_chain",
+        "entity_id": "E0019",
+        "length": 5
+      }
+    ],
+    "network_condition": {
+      "191fb0ec84781a21bc2f2365ec04601684592a64ddaa55360ed8377a17a25b35": "NETWORK_STRONG",
+      "3bc5db98d84f734fc455b089add11715228b868d8c7625c8f17dfadb8cae7753": "NETWORK_ABSENT",
+      "99b6cb0fccf30ce3af1a00e014d3739e9e4205bda0ffa77790f76a5a6e6a7295": "NETWORK_CONFLICTING",
+      "fc59bf4e73384800ce76a2e4ebd5072748d7634d57fc3a10d4082f60eb100bb9": "NETWORK_DELAYED",
+      "19ef79cb0c76ebed21ac0422800226a1b2914763a4c0a845675c872925feb6ed": "NETWORK_STRONG"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00023",
+    "scenario_type": "HIGH_ACTIVITY",
+    "txids": [
+      "3bb2105218dc46c8f9c35e2ccc739a621062b3ec0958d69836faad57aa1b8ea1",
+      "a83eeab64991e567573ff0e8678b2c35f1588cfa7983a47c3acb304c39325640",
+      "99e26f954c93b7189a5623df5d996831f0d34a39a5e16768cd4b08eac3308317",
+      "017e981bcaab6f30e0c11c3e6ca81a1d552ffb7911e160d3ba5896fd0171ea3c",
+      "30508f735edd231b54d9408ff8a0a5e46d65ec6a8532879b6d1f4cdf57bd60ac",
+      "26ddc4fdf0e44d221619e18c5c4c2f3c68fc397b9ac80001a60ca6f33c3b13f5",
+      "974d1aa5dc29e7d441f15432dd1de8ad2e336c334a4639e02467ae5cc220882e",
+      "0ba5b544cb16d8dd84a518bfbda232ba3b0eb2573a85974142b428ce6f50032d",
+      "10636969403007cfce19da4f54b5f712ba4adaf70fdfbfa61e2dfe17af273d76",
+      "86b33ee0b8494c9d95a622bb4e7d78d99d7abdbb0eddeeca429ff487d08d1982"
+    ],
+    "ground_truth_entity_ids": [
+      "E0009"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0009"
+        ]
+      },
+      {
+        "type": "burst_activity",
+        "entity_id": "E0009",
+        "count": 10
+      }
+    ],
+    "network_condition": {
+      "3bb2105218dc46c8f9c35e2ccc739a621062b3ec0958d69836faad57aa1b8ea1": "NETWORK_CONFLICTING",
+      "a83eeab64991e567573ff0e8678b2c35f1588cfa7983a47c3acb304c39325640": "NETWORK_DELAYED",
+      "99e26f954c93b7189a5623df5d996831f0d34a39a5e16768cd4b08eac3308317": "NETWORK_CONFLICTING",
+      "017e981bcaab6f30e0c11c3e6ca81a1d552ffb7911e160d3ba5896fd0171ea3c": "NETWORK_NOISY",
+      "30508f735edd231b54d9408ff8a0a5e46d65ec6a8532879b6d1f4cdf57bd60ac": "NETWORK_DELAYED",
+      "26ddc4fdf0e44d221619e18c5c4c2f3c68fc397b9ac80001a60ca6f33c3b13f5": "NETWORK_CONFLICTING",
+      "974d1aa5dc29e7d441f15432dd1de8ad2e336c334a4639e02467ae5cc220882e": "NETWORK_DELAYED",
+      "0ba5b544cb16d8dd84a518bfbda232ba3b0eb2573a85974142b428ce6f50032d": "NETWORK_NOISY",
+      "10636969403007cfce19da4f54b5f712ba4adaf70fdfbfa61e2dfe17af273d76": "NETWORK_NOISY",
+      "86b33ee0b8494c9d95a622bb4e7d78d99d7abdbb0eddeeca429ff487d08d1982": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00024",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "c7d150ce35d1065cde16b5764d7ee0c8621c03ea84b93c8c921f8f2bf9a64bd1"
+    ],
+    "ground_truth_entity_ids": [
+      "E0004"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0004"
+        ]
+      }
+    ],
+    "network_condition": {
+      "c7d150ce35d1065cde16b5764d7ee0c8621c03ea84b93c8c921f8f2bf9a64bd1": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00025",
+    "scenario_type": "NORMAL",
+    "txids": [
+      "8ff902a284d8195ee23575f0b7519ae6708625107f05e855be7a2a9404d24eb8"
+    ],
+    "ground_truth_entity_ids": [
+      "E0017"
+    ],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0017"
+        ]
+      }
+    ],
+    "network_condition": {
+      "8ff902a284d8195ee23575f0b7519ae6708625107f05e855be7a2a9404d24eb8": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00026",
+    "scenario_type": "PEELING_CHAIN",
+    "txids": [
+      "34eb3f756ee29f258eca1802fc2b266817b6f8c0737f6f536687f7ca295dc373",
+      "176b7e186b015604847359bb5523e9fb4bc318a792a90e1b73107409f2d8529f",
+      "f9f07c3b339e1824ae689de31d4a1d2ba3f269541621084b04ecd81641737851",
+      "ab88eaf2636bfc25e498577456a41f299e6a36eada764cbfdbbf717fe497fa02"
+    ],
+    "ground_truth_entity_ids": [
+      "E0008"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0008"
+        ]
+      },
+      {
+        "type": "peeling_chain",
+        "entity_id": "E0008",
+        "length": 4
+      }
+    ],
+    "network_condition": {
+      "34eb3f756ee29f258eca1802fc2b266817b6f8c0737f6f536687f7ca295dc373": "NETWORK_STRONG",
+      "176b7e186b015604847359bb5523e9fb4bc318a792a90e1b73107409f2d8529f": "NETWORK_STRONG",
+      "f9f07c3b339e1824ae689de31d4a1d2ba3f269541621084b04ecd81641737851": "NETWORK_DELAYED",
+      "ab88eaf2636bfc25e498577456a41f299e6a36eada764cbfdbbf717fe497fa02": "NETWORK_DELAYED"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00027",
+    "scenario_type": "COINJOIN_LIKE",
+    "txids": [
+      "bc0fc578a95964aca9962ae2ccd00315aa93fecadc85221cc1d6db90f2b8f2ef"
+    ],
+    "ground_truth_entity_ids": [
+      "E0017",
+      "E0006",
+      "E0009",
+      "E0012",
+      "E0011"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0017",
+          "E0006",
+          "E0009",
+          "E0012",
+          "E0011"
+        ]
+      },
+      {
+        "type": "coinjoin_group",
+        "entity_ids": [
+          "E0017",
+          "E0006",
+          "E0009",
+          "E0012",
+          "E0011"
+        ]
+      }
+    ],
+    "network_condition": {
+      "bc0fc578a95964aca9962ae2ccd00315aa93fecadc85221cc1d6db90f2b8f2ef": "NETWORK_CONFLICTING"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00028",
+    "scenario_type": "CUSTODIAL_CONSOLIDATION",
+    "txids": [
+      "f6ae25ee80cdcf1b260103aba17f7f3790aa1993a0546b6554c9b7f77dec4bea"
+    ],
+    "ground_truth_entity_ids": [
+      "E0007",
+      "E0002",
+      "E0010",
+      "E0000",
+      "E0019",
+      "E0009",
+      "E0003",
+      "E0016",
+      "E0002"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0007",
+          "E0002",
+          "E0010",
+          "E0000",
+          "E0019",
+          "E0009",
+          "E0003",
+          "E0016",
+          "E0002"
+        ]
+      },
+      {
+        "type": "consolidation",
+        "source_entity_ids": [
+          "E0007",
+          "E0002",
+          "E0010",
+          "E0000",
+          "E0019",
+          "E0009",
+          "E0003",
+          "E0016"
+        ],
+        "sink_entity_id": "E0002"
+      }
+    ],
+    "network_condition": {
+      "f6ae25ee80cdcf1b260103aba17f7f3790aa1993a0546b6554c9b7f77dec4bea": "NETWORK_DELAYED"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00029",
+    "scenario_type": "UNUSUAL_TRANSACTION_STRUCTURE",
+    "txids": [
+      "c81a4bfb1a59e95d525297415804fc4c92397660e9bc0ce484ecc8d0bcac07b9"
+    ],
+    "ground_truth_entity_ids": [
+      "E0001"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0001"
+        ]
+      }
+    ],
+    "network_condition": {
+      "c81a4bfb1a59e95d525297415804fc4c92397660e9bc0ce484ecc8d0bcac07b9": "NETWORK_SPARSE"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00030",
+    "scenario_type": "CUSTODIAL_CONSOLIDATION",
+    "txids": [
+      "6b4d4b10f482a9f8fe0bfa9814cee590166767df26892818fbb96c8ce640eecb"
+    ],
+    "ground_truth_entity_ids": [
+      "E0002",
+      "E0001",
+      "E0010",
+      "E0019",
+      "E0007",
+      "E0004",
+      "E0015"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0002",
+          "E0001",
+          "E0010",
+          "E0019",
+          "E0007",
+          "E0004",
+          "E0015"
+        ]
+      },
+      {
+        "type": "consolidation",
+        "source_entity_ids": [
+          "E0002",
+          "E0001",
+          "E0010",
+          "E0019",
+          "E0007",
+          "E0004"
+        ],
+        "sink_entity_id": "E0015"
+      }
+    ],
+    "network_condition": {
+      "6b4d4b10f482a9f8fe0bfa9814cee590166767df26892818fbb96c8ce640eecb": "NETWORK_CONFLICTING"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00031",
+    "scenario_type": "HIGH_ACTIVITY",
+    "txids": [
+      "f38ea6c4fa706b20d8b7215bca00448878d62b88a175c20e5c9767b14074d99d",
+      "7cb360a0d0182dcb157babddb4444e53921b8070a18607a46cdf2752ac903d07",
+      "96a1b6e5da21448322276d333098cfffe56a755e9393d072644d292332af1e37",
+      "9563233fbf185d288123ce4c2446c08d513f365a6538b40e780bf431d2078fb4",
+      "daad3d62449899f5ac1a1b440b1c02da131c7d055013887b9300796c9c55329e",
+      "218d513bb4c59a1a05fe1d82a02133c333cf38c8ab73c37a01917c2f8c8daafa",
+      "a135fee1c3d1856f298091edab5284855e51c3bfea99d822ba367484308fb27c",
+      "3cdf3bc1a595b4a58e59c904de034578664454d2041eb8246178e240e0a81fe2"
+    ],
+    "ground_truth_entity_ids": [
+      "E0006"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0006"
+        ]
+      },
+      {
+        "type": "burst_activity",
+        "entity_id": "E0006",
+        "count": 8
+      }
+    ],
+    "network_condition": {
+      "f38ea6c4fa706b20d8b7215bca00448878d62b88a175c20e5c9767b14074d99d": "NETWORK_ABSENT",
+      "7cb360a0d0182dcb157babddb4444e53921b8070a18607a46cdf2752ac903d07": "NETWORK_ABSENT",
+      "96a1b6e5da21448322276d333098cfffe56a755e9393d072644d292332af1e37": "NETWORK_DELAYED",
+      "9563233fbf185d288123ce4c2446c08d513f365a6538b40e780bf431d2078fb4": "NETWORK_ABSENT",
+      "daad3d62449899f5ac1a1b440b1c02da131c7d055013887b9300796c9c55329e": "NETWORK_DELAYED",
+      "218d513bb4c59a1a05fe1d82a02133c333cf38c8ab73c37a01917c2f8c8daafa": "NETWORK_STRONG",
+      "a135fee1c3d1856f298091edab5284855e51c3bfea99d822ba367484308fb27c": "NETWORK_ABSENT",
+      "3cdf3bc1a595b4a58e59c904de034578664454d2041eb8246178e240e0a81fe2": "NETWORK_CONFLICTING"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00032",
+    "scenario_type": "CUSTODIAL_CONSOLIDATION",
+    "txids": [
+      "cb00e70059c36642fc4b1b26ff2929eda86994251055a5911d9c121bfb85e040"
+    ],
+    "ground_truth_entity_ids": [
+      "E0006",
+      "E0003",
+      "E0018",
+      "E0013",
+      "E0011",
+      "E0019",
+      "E0013"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0006",
+          "E0003",
+          "E0018",
+          "E0013",
+          "E0011",
+          "E0019",
+          "E0013"
+        ]
+      },
+      {
+        "type": "consolidation",
+        "source_entity_ids": [
+          "E0006",
+          "E0003",
+          "E0018",
+          "E0013",
+          "E0011",
+          "E0019"
+        ],
+        "sink_entity_id": "E0013"
+      }
+    ],
+    "network_condition": {
+      "cb00e70059c36642fc4b1b26ff2929eda86994251055a5911d9c121bfb85e040": "NETWORK_NOISY"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00033",
+    "scenario_type": "HIGH_ACTIVITY",
+    "txids": [
+      "59ae34eb66e83aeb18691e93ba94228b27908896244245c5bd0548cf8d592bc1",
+      "c774b27fe0dca1db9b1a008a8238f4a85290ff9f0f3d6bcd914704ef1a088b46",
+      "0e3d0524a0cbd1e5d2680b198adbfe2f630dd38422631c880698c18fd7d4f59f",
+      "86b57e4cff0be7330d9fe4c425463e9b853e330ab4b50c3acbaba313a24de84a",
+      "6c7594819c09b692cd02421ba5e0700a7f11d3a3ed38cf95e183e85facf9f6fa",
+      "e6ddfcccd0f13695e2fe8e6ff353e9a9e93df10523beef81e91360c6ce2d9bb7",
+      "0d06bbd514994cfe9008ac83b69fa1512da5ae17914ea72e258f245dfe0bc313",
+      "fb87baad33f3b129a0f982785841a957f7a8029553dbc763fa2431eccbd7158c"
+    ],
+    "ground_truth_entity_ids": [
+      "E0014"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0014"
+        ]
+      },
+      {
+        "type": "burst_activity",
+        "entity_id": "E0014",
+        "count": 8
+      }
+    ],
+    "network_condition": {
+      "59ae34eb66e83aeb18691e93ba94228b27908896244245c5bd0548cf8d592bc1": "NETWORK_STRONG",
+      "c774b27fe0dca1db9b1a008a8238f4a85290ff9f0f3d6bcd914704ef1a088b46": "NETWORK_NOISY",
+      "0e3d0524a0cbd1e5d2680b198adbfe2f630dd38422631c880698c18fd7d4f59f": "NETWORK_CONFLICTING",
+      "86b57e4cff0be7330d9fe4c425463e9b853e330ab4b50c3acbaba313a24de84a": "NETWORK_DELAYED",
+      "6c7594819c09b692cd02421ba5e0700a7f11d3a3ed38cf95e183e85facf9f6fa": "NETWORK_STRONG",
+      "e6ddfcccd0f13695e2fe8e6ff353e9a9e93df10523beef81e91360c6ce2d9bb7": "NETWORK_DELAYED",
+      "0d06bbd514994cfe9008ac83b69fa1512da5ae17914ea72e258f245dfe0bc313": "NETWORK_DELAYED",
+      "fb87baad33f3b129a0f982785841a957f7a8029553dbc763fa2431eccbd7158c": "NETWORK_SPARSE"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00034",
+    "scenario_type": "UNUSUAL_VALUE_FLOW",
+    "txids": [
+      "946b3132d828ecc9b1c53f02ce90536e0d4b14da2ed84e11f501e9437103557c"
+    ],
+    "ground_truth_entity_ids": [
+      "E0006"
+    ],
+    "anomaly_label": true,
+    "expected_relationships": [
+      {
+        "type": "address_ownership",
+        "entity_ids": [
+          "E0006"
+        ]
+      }
+    ],
+    "network_condition": {
+      "946b3132d828ecc9b1c53f02ce90536e0d4b14da2ed84e11f501e9437103557c": "NETWORK_SPARSE"
+    },
+    "seed": 42
+  },
+  {
+    "scenario_id": "SCN-00035",
+    "scenario_type": "DUPLICATE_RECORDS",
+    "txids": [
+      "f54da8e6461392cde2a8b139c7d5fb6284013f324148415ea2a3c7c3984aee7a",
+      "1f02c74c5813ee57f8cc653c84598a912ce958f038e0fe1e3575dd6c70174696",
+      "8afe7cc40230458c5ebe15cc29bccca8f3a8df7240b8bb66f1e20f86525a8bb0"
+    ],
+    "ground_truth_entity_ids": [],
+    "anomaly_label": false,
+    "expected_relationships": [
+      {
+        "type": "exact_duplicate_row",
+        "txids": [
+          "f54da8e6461392cde2a8b139c7d5fb6284013f324148415ea2a3c7c3984aee7a",
+          "1f02c74c5813ee57f8cc653c84598a912ce958f038e0fe1e3575dd6c70174696",
+          "8afe7cc40230458c5ebe15cc29bccca8f3a8df7240b8bb66f1e20f86525a8bb0"
+        ]
+      }
+    ],
+    "network_condition": {},
+    "seed": 42
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "errors": [],
+  "warnings": [],
+  "shared_address_count": 73,
+  "scenario_type_counts": {
+    "NORMAL": 9,
+    "HIGH_ACTIVITY": 6,
+    "CUSTODIAL_CONSOLIDATION": 5,
+    "UNUSUAL_TRANSACTION_STRUCTURE": 3,
+    "UNUSUAL_VALUE_FLOW": 2,
+    "PEELING_CHAIN": 6,
+    "COINJOIN_LIKE": 3,
+    "DUPLICATE_RECORDS": 1
+  },
+  "passed": true
+}
