@@ -1,0 +1,25 @@
+# TraceLayer Intelligence Worker — Dependencies
+# Install: pip install -r requirements.txt
+
+# --- Web Framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+
+# --- ML / Data Science ---
+scikit-learn==1.6.1
+numpy==2.1.3
+pandas==2.2.3
+scipy==1.14.1
+joblib==1.4.2
+
+# --- Explainability ---
+shap==0.46.0
+lime==0.2.0.1
+
+# --- Testing ---
+pytest==8.3.4
+httpx==0.28.1
+
+# --- Utilities ---
+python-dotenv==1.0.1
