@@ -2,6 +2,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -17,9 +18,9 @@ type Satoshis int64
 const satoshisPerBTC = 100_000_000
 
 var (
-	ErrInvalidAmountFormat    = errors.New("domain: amount is not a valid decimal string")
+	ErrInvalidAmountFormat     = errors.New("domain: amount is not a valid decimal string")
 	ErrAmountPrecisionOverflow = errors.New("domain: amount has more than 8 fractional digits")
-	ErrNegativeAmount         = errors.New("domain: amount must not be negative")
+	ErrNegativeAmount          = errors.New("domain: amount must not be negative")
 )
 
 // ParseBTCString converts a decimal BTC string as emitted by the seed-42
@@ -33,6 +34,9 @@ func ParseBTCString(s string) (Satoshis, error) {
 	}
 	if strings.HasPrefix(s, "-") {
 		return 0, ErrNegativeAmount
+	}
+	if i := strings.IndexAny(s, "eE"); i >= 0 {
+		return parseScientificBTCString(s, i)
 	}
 
 	whole, frac, hasFrac := strings.Cut(s, ".")
@@ -86,4 +90,67 @@ func (s Satoshis) String() string {
 	whole := int64(s) / satoshisPerBTC
 	frac := int64(s) % satoshisPerBTC
 	return fmt.Sprintf("%d.%08d", whole, frac)
+}
+
+// MarshalJSON renders Satoshis as a quoted BTC decimal string, e.g.
+// "0.00105655" — never a bare JSON number, which cannot hold 8-decimal
+// exactness safely. This is the one deviation from API_CONTRACT.md's
+// example formatting, kept to preserve the no-float-for-money invariant
+// all the way to the wire.
+func (s Satoshis) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.String())
+}
+
+// parseScientificBTCString handles inputs like "3.536e-05" — the seed-42
+// generator emits scientific notation for small BTC values (Python's float
+// repr does this automatically). Converted via pure integer arithmetic:
+// mantissa digits shifted by (8 - fractional_digits + exponent) places to
+// land on satoshis. If that shift is negative and doesn't divide evenly,
+// the value needs sub-satoshi precision Bitcoin doesn't have — rejected,
+// not silently truncated.
+func parseScientificBTCString(s string, eIdx int) (Satoshis, error) {
+	mantissa, expPart := s[:eIdx], s[eIdx+1:]
+
+	exponent, err := strconv.Atoi(expPart)
+	if err != nil {
+		return 0, ErrInvalidAmountFormat
+	}
+
+	whole, frac, hasFrac := strings.Cut(mantissa, ".")
+	if whole == "" {
+		whole = "0"
+	}
+	if !isDigits(whole) {
+		return 0, ErrInvalidAmountFormat
+	}
+	if hasFrac && !isDigits(frac) {
+		return 0, ErrInvalidAmountFormat
+	}
+
+	mantissaVal, err := strconv.ParseInt(whole+frac, 10, 64)
+	if err != nil {
+		return 0, ErrInvalidAmountFormat
+	}
+
+	totalShift := 8 - len(frac) + exponent
+	if totalShift > 18 {
+		return 0, ErrInvalidAmountFormat // implausible for any real BTC amount
+	}
+
+	switch {
+	case totalShift >= 0:
+		for i := 0; i < totalShift; i++ {
+			mantissaVal *= 10
+		}
+		return Satoshis(mantissaVal), nil
+	default:
+		divisor := int64(1)
+		for i := 0; i < -totalShift; i++ {
+			divisor *= 10
+		}
+		if mantissaVal%divisor != 0 {
+			return 0, ErrAmountPrecisionOverflow // needs sub-satoshi precision
+		}
+		return Satoshis(mantissaVal / divisor), nil
+	}
 }
