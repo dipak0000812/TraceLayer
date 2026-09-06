@@ -280,3 +280,4 @@ When in conflict between `DATA_CONTRACT.md` and `openapi.yaml`, raise an issue â
 | [data/metadata/schema.md](../data/metadata/schema.md) | Generator-authoritative field schema |
 | [data/metadata/manifest.json](../data/metadata/manifest.json) | Dataset checksums and record counts |
 | [docs/PRD_ROUND2.md](../docs/PRD_ROUND2.md) | Full PRD (reference; DATA_CONTRACT overrides on field detail) |
+
