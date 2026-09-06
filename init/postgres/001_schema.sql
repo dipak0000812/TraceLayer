@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     script_type       VARCHAR(16) NOT NULL,
     provenance        VARCHAR(32) NOT NULL DEFAULT 'SYNTHETIC',
     dataset_id        VARCHAR(32) NOT NULL,
+    generator_version VARCHAR(16) NOT NULL,
     ingested_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT chk_transactions_script_type
@@ -61,6 +62,7 @@ CREATE TABLE IF NOT EXISTS network_observations (
     correlation_status    VARCHAR(16) NOT NULL DEFAULT 'PENDING',
     provenance            VARCHAR(32) NOT NULL DEFAULT 'SYNTHETIC',
     dataset_id            VARCHAR(32) NOT NULL,
+    generator_version     VARCHAR(16) NOT NULL,
     ingested_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT chk_net_obs_correlation_status
