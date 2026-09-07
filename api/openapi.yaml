@@ -1,421 +1,259 @@
-openapi: "3.0.3"
+openapi: 3.0.3
 info:
-  title: TraceLayer API
-  version: "1.0.0"
-  description: |
-    TraceLayer Round-2 forensic evidence-correlation API.
-    SIH Problem Statement SIH26146 - offline Bitcoin transaction network analysis.
-
-    EPISTEMIC BOUNDARY: This system produces investigative leads for human analyst
-    review. It does NOT identify individuals, guarantee wallet ownership, or produce
-    calibrated probabilities. Peer IP observations indicate propagation relay, NOT
-    transaction origin. Address clustering is heuristic, NOT identity proof.
-  contact:
-    name: TraceLayer Team
+  title: TraceLayer Go API
+  version: 0.1.0
+  description: Current public HTTP contract for the TraceLayer backend.
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Local development
-tags:
-  - name: health
-  - name: ingestion
-  - name: transactions
-  - name: entities
-  - name: detection
-  - name: evidence
+  - url: http://localhost:8080
+    description: Local development server
 paths:
   /health:
     get:
-      operationId: getHealth
-      summary: Service health check
-      tags: [health]
+      operationId: health
       responses:
-        "200":
-          description: All services healthy
+        '200':
+          description: PostgreSQL-backed API health
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
-          description: One or more services degraded
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-  /ingest/bulk:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/ingest/blockchain:
     post:
-      operationId: ingestBulk
-      summary: Ingest combined bulk dataset (14 PS fields incl geo_country, asn)
-      description: |
-        Accepts data/raw/bitcoin_traffic.csv or its JSON equivalent.
-        Partial batch tolerance: valid records accepted; invalid records written to rejection_log.
-      tags: [ingestion]
+      operationId: ingestBlockchain
       requestBody:
         required: true
         content:
           text/csv:
             schema:
               type: string
-              format: binary
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/BulkRecord"
       responses:
-        "200":
-          description: Batch accepted (may include partial rejections)
+        '200':
+          description: Ingestion result emitted by the current handler
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BatchSummary"
-        "400":
-          description: Request-level validation failure
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /ingest/transactions:
-    post:
-      operationId: ingestTransactions
-      summary: Ingest blockchain transaction records only (11 fields, no geo)
-      tags: [ingestion]
-      requestBody:
-        required: true
-        content:
-          text/csv:
-            schema:
-              type: string
-              format: binary
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/TransactionRaw"
-      responses:
-        "200":
-          description: Batch accepted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BatchSummary"
-        "400":
-          description: Validation failure
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /ingest/network:
+                $ref: '#/components/schemas/IngestionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/ingest/network:
     post:
       operationId: ingestNetwork
-      summary: Ingest network observation records only (10 fields, no geo)
-      tags: [ingestion]
       requestBody:
         required: true
         content:
           text/csv:
             schema:
               type: string
-              format: binary
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/NetworkObservationRaw"
       responses:
-        "200":
-          description: Batch accepted
+        '200':
+          description: Ingestion result emitted by the current handler
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BatchSummary"
-        "400":
-          description: Validation failure
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /batches/{batch_id}:
-    get:
-      operationId: getBatch
-      summary: Get ingestion batch status
-      tags: [ingestion]
-      parameters:
-        - name: batch_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+                $ref: '#/components/schemas/IngestionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/correlate:
+    post:
+      operationId: correlate
       responses:
-        "200":
-          description: Batch status
+        '200':
+          description: Correlation, entity resolution, and ranking result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BatchStatus"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /batches/{batch_id}/rejections:
+                $ref: '#/components/schemas/CorrelateResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/evidence/{txid}:
     get:
-      operationId: getBatchRejections
-      summary: Get rejection log for an ingestion batch
-      tags: [ingestion]
+      operationId: getEvidence
       parameters:
-        - name: batch_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: '#/components/parameters/Txid'
+      responses:
+        '200':
+          description: Evidence bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/leads:
+    get:
+      operationId: listLeads
+      parameters:
         - name: page
           in: query
-          schema:
-            type: integer
-            default: 1
-            minimum: 1
+          required: false
+          schema: {type: integer, minimum: 1, default: 1}
         - name: limit
           in: query
-          schema:
-            type: integer
-            default: 20
-            minimum: 1
-            maximum: 100
-      responses:
-        "200":
-          description: Rejection list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RejectionList"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /transactions/{txid}:
-    get:
-      operationId: getTransaction
-      summary: Get transaction detail with network observations and correlation stats
-      tags: [transactions]
-      parameters:
-        - name: txid
-          in: path
-          required: true
-          schema:
-            type: string
-            pattern: "^[0-9a-f]{64}$"
-      responses:
-        "200":
-          description: Transaction detail
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TransactionDetail"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /entities:
-    get:
-      operationId: listEntities
-      summary: List entities ranked by detection scores
-      tags: [entities]
-      parameters:
+          required: false
+          schema: {type: integer, minimum: 1, default: 20}
         - name: sort_by
           in: query
-          schema:
-            type: string
-            enum: [chain_anomaly_score, fused_score, rank_shift]
-            default: fused_score
-        - name: order
-          in: query
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: desc
-        - name: run_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-            minimum: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
-            minimum: 1
-            maximum: 100
+          required: false
+          schema: {type: string, enum: [fused_rank, rank_shift], default: fused_rank}
       responses:
-        "200":
-          description: Paginated entity list
+        '200':
+          description: Persisted forensic leads
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EntityList"
-  /entities/{entity_id}:
+                $ref: '#/components/schemas/LeadListResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/leads/{id}:
     get:
-      operationId: getEntity
-      summary: Get entity detail with detection scores
-      tags: [entities]
+      operationId: getLead
       parameters:
-        - name: entity_id
+        - name: id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-        - name: run_id
-          in: query
-          schema:
-            type: string
-            format: uuid
       responses:
-        "200":
-          description: Entity detail
+        '200':
+          description: Forensic lead
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EntityDetail"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /detection/run:
-    post:
-      operationId: runDetection
-      summary: Trigger AI/ML detection run (returns 202 immediately)
-      tags: [detection]
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DetectionRequest"
-      responses:
-        "202":
-          description: Detection run accepted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DetectionRunTicket"
-        "400":
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /detection/results:
-    get:
-      operationId: getDetectionResults
-      summary: Get results for a detection run
-      tags: [detection]
-      parameters:
-        - name: run_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-            minimum: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 20
-            minimum: 1
-            maximum: 100
-      responses:
-        "200":
-          description: Detection results
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DetectionResultList"
-        "404":
-          description: Run not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /evidence/subgraph/{entity_id}:
-    get:
-      operationId: getEvidenceSubgraph
-      summary: Get Cytoscape.js evidence subgraph for an entity
-      tags: [evidence]
-      parameters:
-        - name: entity_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: hops
-          in: query
-          schema:
-            type: integer
-            default: 2
-            minimum: 1
-            maximum: 3
-      responses:
-        "200":
-          description: Cytoscape.js adjacency JSON
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CytoscapeGraph"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /evidence/compare/{entity_id}:
-    get:
-      operationId: compareEvidence
-      summary: Full evidence card with rank shift and fusion decomposition
-      tags: [evidence]
-      parameters:
-        - name: entity_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: run_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Evidence comparison card
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EvidenceComparison"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/Lead'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  parameters:
+    Txid:
+      name: txid
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[0-9a-f]{64}$'
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, timestamp, services]
+      properties:
+        status: {type: string}
+        timestamp: {type: string, format: date-time}
+        services:
+          type: object
+          additionalProperties: {type: string}
+    IngestionResponse:
+      type: object
+      required: [ingested_count, duplicate_count, rejected_count, dataset_id]
+      properties:
+        ingested_count: {type: integer}
+        duplicate_count: {type: integer}
+        rejected_count: {type: integer}
+        dataset_id: {type: string}
+    CorrelateResponse:
+      type: object
+      required: [status, entities_clustered, leads_generated, observations_correlated]
+      properties:
+        status: {type: string}
+        entities_clustered: {type: integer}
+        leads_generated: {type: integer}
+        observations_correlated: {type: integer}
+    EvidenceResponse:
+      type: object
+      required: [transaction, network_observations, quality_metric, disclaimer]
+      properties:
+        transaction:
+          $ref: '#/components/schemas/EvidenceTransaction'
+        network_observations:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceObservation'
+        quality_metric: {type: number, format: double}
+        disclaimer: {type: string}
+    EvidenceTransaction:
+      type: object
+      required: [txid, timestamp, input_addresses, output_addresses, fee, script_type]
+      properties:
+        txid: {type: string, pattern: '^[0-9a-f]{64}$'}
+        timestamp: {type: string, format: date-time}
+        input_addresses: {type: array, items: {type: string}}
+        output_addresses: {type: array, items: {type: string}}
+        fee: {type: string, description: Exact BTC decimal string}
+        script_type: {type: string}
+    EvidenceObservation:
+      type: object
+      required: [observation_id, observed_at, first_heard_peer_ip, src_port]
+      properties:
+        observation_id: {type: string}
+        observed_at: {type: string, format: date-time}
+        first_heard_peer_ip: {type: string}
+        src_port: {type: integer, minimum: 0, maximum: 65535}
+        geo_country: {type: string, nullable: true, description: Nullable compatibility field; not a current runtime enrichment requirement}
+        asn: {type: string, nullable: true, description: Nullable compatibility field; not a current runtime enrichment requirement}
+        propagation_delay_ms: {type: integer, format: int64, nullable: true}
+    Lead:
+      type: object
+      required: [lead_id, entity_id, primary_txid, chain_only_score, network_score, fused_score, chain_only_rank, fused_rank, rank_shift, network_evidence_quality, heuristic_association_strength, anomaly_flags, explanation]
+      properties:
+        lead_id: {type: string}
+        entity_id: {type: string}
+        primary_txid: {type: string, pattern: '^[0-9a-f]{64}$'}
+        chain_only_score: {type: number, format: double}
+        network_score: {type: number, format: double}
+        fused_score: {type: number, format: double}
+        chain_only_rank: {type: integer}
+        fused_rank: {type: integer}
+        rank_shift: {type: integer}
+        network_evidence_quality: {type: number, format: double}
+        heuristic_association_strength: {type: number, format: double}
+        anomaly_flags: {type: array, items: {type: string}}
+        explanation: {type: string}
+    LeadListResponse:
+      type: object
+      required: [total_leads, page, limit, leads]
+      properties:
+        total_leads: {type: integer}
+        page: {type: integer}
+        limit: {type: integer}
+        leads:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lead'
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, field]
+          properties:
+            code: {type: string}
+            message: {type: string}
+            field: {type: string, nullable: true}
+  responses:
+    BadRequest:
+      description: Invalid request or domain value
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ErrorResponse'}
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ErrorResponse'}
+    InternalError:
+      description: Internal or persistence failure
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ErrorResponse'}

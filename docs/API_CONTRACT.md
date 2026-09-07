@@ -1,324 +1,182 @@
-# TraceLayer — API Contract v1.0
+# TraceLayer API Contract
 
-**Document Status:** Approved Architectural and Contract Baseline  
-**Scope:** Round-2 Integration Boundary  
-**Architecture:** 12 External Go REST Endpoints + 1 Internal Python Intelligence Endpoint  
+**Status:** Current implementation contract
 
----
+This document describes the Go API in the checked-out backend working tree and the separate Python worker contract present on `origin/feature/intelligence`. Implementation is authoritative over older documentation.
 
-## 1. Overview & Service Topology
+## 1. API conventions
 
-```
-                  ┌────────────────────────────────────────┐
-                  │          Analyst Web Browser           │
-                  └───────────────────┬────────────────────┘
-                                      │
-                                      ▼ HTTP (JSON)
-                  ┌────────────────────────────────────────┐
-                  │         Go API Server (Port 8080)      │
-                  │        (12 External REST Endpoints)    │
-                  └─────────────┬──────────────────────────┘
-                                │
-                                ▼ HTTP (Internal Port 8000)
-                  ┌────────────────────────────────────────┐
-                  │     Python Intelligence Worker         │
-                  │   (POST /intelligence/score - Internal)│
-                  └────────────────────────────────────────┘
+- Go API base path: `/api/v1`.
+- Health is exposed at `/health`, outside the versioned API path.
+- Requests and responses use JSON unless stated otherwise.
+- The current server enables CORS for the prototype.
+
+Current Go routes:
+
+```text
+GET  /health
+POST /api/v1/ingest/blockchain
+POST /api/v1/ingest/network
+POST /api/v1/correlate
+GET  /api/v1/evidence/{txid}
+GET  /api/v1/leads
+GET  /api/v1/leads/{id}
 ```
 
-The Go server exposes 12 external endpoints for frontend and operational consumers.  
-The Python FastAPI intelligence worker exposes 1 internal endpoint (`POST /intelligence/score`), which is never exposed through the frontend.
+There is no public Go route for bulk ingestion, ingestion status, detection runs, detection results, evidence comparison, or evidence subgraphs.
 
----
+## 2. Health
 
-## 2. External Go REST Endpoints (12 Endpoints)
+### `GET /health`
 
-### 2.1 System & Operations
+The handler checks PostgreSQL and returns a JSON health document. A successful response means the API can answer the health request; it does not mean that a Python worker is configured.
 
-#### `GET /health`
-- **Description:** Returns aggregate health of the Go process, PostgreSQL, Neo4j, and Python worker.
-- **Response `200 OK`:**
-  ```json
-  {
-    "status": "HEALTHY",
-    "timestamp": "2026-09-06T11:00:00Z",
-    "services": {
-      "postgres": "UP",
-      "neo4j": "UP",
-      "intelligence_worker": "UP"
-    }
+Current response shape:
+
+```json
+{
+  "status": "HEALTHY",
+  "timestamp": "2026-09-07T00:00:00Z",
+  "services": {
+    "postgres": "UP",
+    "intelligence_worker": "NOT_IMPLEMENTED",
+    "neo4j": "NOT_IMPLEMENTED"
   }
-  ```
+}
+```
 
-#### `GET /api/v1/config/fusion`
-- **Description:** Returns active fusion weights, quality discount thresholds, and heuristic model parameters.
-- **Response `200 OK`:**
-  ```json
-  {
-    "model_version": "1.0.0",
-    "weights": {
-      "w_chain": 2.0,
-      "w_net": 1.5,
-      "w_mixing": 1.0,
-      "bias": -1.0
-    },
-    "quality_parameters": {
-      "n_threshold": 3,
-      "max_spread_seconds": 120.0
-    }
+The `neo4j` key is a legacy diagnostic emitted by the current handler and does not represent a current dependency. The worker key is also diagnostic; the current Go health handler does not actively probe the separate Python service. The route returns `200` when PostgreSQL is healthy and `503` when it is unavailable.
+
+## 3. Blockchain ingestion
+
+### `POST /api/v1/ingest/blockchain`
+
+The current handler accepts a CSV request body. JSON request bodies are not supported by this route.
+
+The CSV header is:
+
+```text
+txid,timestamp,input_addresses,output_addresses,input_amounts,output_amounts,fee,script_type,provenance,dataset_id,generator_version
+```
+
+The raw seed-42 CSV uses JSON-encoded address and amount arrays inside CSV fields. The Go ingestion parser converts them into domain values. Amount strings are parsed using the Go domain's exact satoshi representation.
+
+The response reports the ingestion result and counts emitted by the current handler. A successful request returns `200`; malformed CSV or invalid records return a client error; persistence failures return a server error.
+
+## 4. Network ingestion
+
+### `POST /api/v1/ingest/network`
+
+The current handler accepts a CSV request body. JSON request bodies are not supported by this route.
+
+The CSV header is:
+
+```text
+observation_id,timestamp,src_ip,dst_ip,src_port,dst_port,txid,provenance,dataset_id,generator_version
+```
+
+Network ingestion is independent of transaction ingestion. An observation is retained even when its TXID does not yet have a matching transaction. Correlation is performed later.
+
+## 5. Correlation and ranking
+
+### `POST /api/v1/correlate`
+
+The current handler does not require a request body. It runs:
+
+1. TXID correlation.
+2. Deterministic entity resolution.
+3. Forensic lead ranking and persistence.
+
+Example response:
+
+```json
+{
+  "status": "SUCCESS",
+  "entities_clustered": 20,
+  "leads_generated": 20,
+  "observations_correlated": 350
+}
+```
+
+The counts are data-dependent. A failure in any stage returns a server error. The current implementation does not wrap all three stages in one shared PostgreSQL transaction, so partial persistence is possible if a later stage fails.
+
+If `INTELLIGENCE_URL` is configured, ranking calls the Python worker. If it is not configured or the worker cannot be reached, the current ranking implementation can use its heuristic fallback. This is current behavior, not an explicit `FAILED`/`INCOMPLETE` run-state contract.
+
+## 6. Evidence
+
+### `GET /api/v1/evidence/{txid}`
+
+Returns the evidence bundle for one transaction ID, including the transaction and correlated network observations available to the Go evidence layer. Observation objects may contain nullable `geo_country`, `asn`, and `propagation_delay_ms` fields because they exist in the current storage and response structs; no current runtime enrichment service is required to populate them.
+
+- `200`: evidence found.
+- `400`: malformed TXID path value.
+- `404`: no evidence for the TXID.
+- `500`: storage failure.
+
+No graph or subgraph representation is part of the current contract.
+
+## 7. Leads
+
+### `GET /api/v1/leads`
+
+Returns persisted forensic leads ordered by `fused_rank` by default. The current handler supports `page` and `limit` query parameters, defaulting to 1 and 20, and accepts `sort_by=rank_shift` to order by rank shift. The response contains `total_leads`, `page`, `limit`, and `leads`.
+
+### `GET /api/v1/leads/{id}`
+
+Returns one forensic lead by its lead identifier.
+
+A lead contains the persisted lead ID, entity ID, primary TXID, chain-only score, network score, fused score, chain-only rank, fused rank, rank shift, and explanation fields available from the current ranking/storage implementation.
+
+## 8. Validation and errors
+
+The Go domain validates TXIDs as 64 lowercase hexadecimal characters, transaction amount relationships, fee relationships, script type, network observation identifiers, ports, and lead score/rank invariants.
+
+Errors use this JSON envelope from `internal/api/errors.go`:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "description",
+    "field": "txid"
   }
-  ```
+}
+```
 
----
+The `field` value may be null. Current codes are `VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, and `INTERNAL_ERROR`.
 
-### 2.2 Decoupled Data Ingestion
+## 9. Amount encoding
 
-#### `POST /api/v1/ingest/blockchain`
-- **Description:** Ingests raw Bitcoin transaction records (`data/raw/transactions.csv` or `.json`).
-- **Request Body (Multipart or JSON Array):**
-  ```json
-  [
-    {
-      "txid": "b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b",
-      "timestamp": "2025-03-22T16:34:25Z",
-      "input_addresses": ["sbc18d20c1d613b34c0e6946f41fc34692fc9daf10"],
-      "output_addresses": ["sbc1231363128bc87877088348b38c25cc78ac7f16"],
-      "input_amounts": [0.74038447],
-      "output_amounts": [0.73932792],
-      "fee": 0.00105655,
-      "script_type": "P2PKH",
-      "provenance": "SYNTHETIC",
-      "dataset_id": "6bc084b677a63411",
-      "generator_version": "1.0.0"
-    }
-  ]
-  ```
-- **Response `200 OK`:**
-  ```json
-  {
-    "ingested_count": 108,
-    "duplicate_count": 1,
-    "rejected_count": 0,
-    "dataset_id": "6bc084b677a63411"
-  }
-  ```
+The Go domain uses exact satoshi-based monetary values and parses decimal BTC strings without routing them through `float64`.
 
-#### `POST /api/v1/ingest/network`
-- **Description:** Ingests raw P2P network observations (`data/raw/network_observations.csv` or `.json`). Decoupled from transactions.
-- **Request Body (JSON Array):**
-  ```json
-  [
-    {
-      "observation_id": "obs_0195e6f3",
-      "timestamp": "2025-03-22T16:34:24Z",
-      "src_ip": "172.16.2.66",
-      "dst_ip": "198.51.100.199",
-      "src_port": 34690,
-      "dst_port": 7589,
-      "txid": "b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b",
-      "provenance": "SYNTHETIC",
-      "dataset_id": "6bc084b677a63411",
-      "generator_version": "1.0.0"
-    }
-  ]
-  ```
-- **Response `200 OK`:**
-  ```json
-  {
-    "ingested_count": 368,
-    "duplicate_count": 0,
-    "rejected_count": 0
-  }
-  ```
+The Python worker schema on `origin/feature/intelligence` accepts `amount_btc` and `fee_btc` as JSON floating-point numbers. The Go intelligence client currently defines those fields as `float64`. Exact decimal preservation inside Python is therefore not guaranteed by this boundary.
 
-#### `POST /api/v1/ingest/bulk`
-- **Description:** Triggers bulk ingestion of the canonical directory `data/raw/` (ingesting `transactions.csv` and `network_observations.csv`).
-- **Response `200 OK`:**
-  ```json
-  {
-    "status": "COMPLETED",
-    "transactions_ingested": 109,
-    "transactions_unique": 108,
-    "transactions_duplicates": 1,
-    "network_observations_ingested": 368,
-    "duration_ms": 142
-  }
-  ```
+## 10. Provenance and correlation
 
-#### `GET /api/v1/ingest/status`
-- **Description:** Returns current dataset counts, rejection logs, and correlation statistics.
-- **Response `200 OK`:**
-  ```json
-  {
-    "transactions_total": 108,
-    "network_observations_total": 368,
-    "correlated_observations": 352,
-    "orphan_observations": 16,
-    "rejected_records": []
-  }
-  ```
+Current provenance values are defined by the Go domain and PostgreSQL constraints. Seed-42 runtime records use `SYNTHETIC`. Network observations are decoupled from transactions and may remain unmatched until `/api/v1/correlate` runs.
 
----
+## 11. Go to Python boundary
 
-### 2.3 Correlation, Leads & Evidence
+The separate worker exposes:
 
-#### `POST /api/v1/correlate`
-- **Description:** Executes TXID logical correlation, Common-Input DSU clustering, and calls Python intelligence scoring.
-- **Response `200 OK`:**
-  ```json
-  {
-    "status": "SUCCESS",
-    "entities_clustered": 20,
-    "leads_generated": 20,
-    "observations_correlated": 352
-  }
-  ```
+```text
+GET  /health
+POST /intelligence/score
+```
 
-#### `GET /api/v1/leads`
-- **Description:** Returns ranked forensic investigative leads for analyst triage.
-- **Query Parameters:** `page` (default 1), `limit` (default 20), `sort_by` (`fused_rank` | `rank_shift`).
-- **Response `200 OK`:**
-  ```json
-  {
-    "total_leads": 20,
-    "page": 1,
-    "limit": 20,
-    "leads": [
-      {
-        "lead_id": "lead_1a2b3c4d",
-        "entity_id": "ent_9f8e7d6c",
-        "primary_txid": "b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b",
-        "chain_only_score": 0.42,
-        "network_score": 0.88,
-        "fused_score": 0.79,
-        "chain_only_rank": 8,
-        "fused_rank": 2,
-        "rank_shift": 6,
-        "network_evidence_quality": 0.94,
-        "heuristic_association_strength": 0.81,
-        "anomaly_flags": ["RAPID_DISPERSION", "HIGH_FAN_OUT"],
-        "explanation": "Network propagation dispersion across 4 ASNs within 12s shifts entity priority by +6 ranks."
-      }
-    ]
-  }
-  ```
+The Go client sends a batch of transactions containing TXID, BTC amount fields, input/output counts, script type, and network observations. The worker returns chain, network, mixing, quality, fused, flags, and explanation fields.
 
-#### `GET /api/v1/leads/{id}`
-- **Description:** Detailed evidence card and breakdown for a specific lead or entity.
-- **Response `200 OK`:** Single lead object identical to the element schema above, with additional metadata.
+The worker is stateless, has no PostgreSQL connection, and loads a checked-in Isolation Forest model artifact. It is an internal service boundary, not a public frontend route.
 
-#### `GET /api/v1/evidence/{txid}`
-- **Description:** Retrieves the complete dual-layer evidence bundle for a transaction.
-- **Response `200 OK`:**
-  ```json
-  {
-    "transaction": {
-      "txid": "b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b",
-      "timestamp": "2025-03-22T16:34:25Z",
-      "input_addresses": ["sbc18d20c1d613b34c0e6946f41fc34692fc9daf10"],
-      "output_addresses": ["sbc1231363128bc87877088348b38c25cc78ac7f16"],
-      "fee": 0.00105655,
-      "script_type": "P2PKH"
-    },
-    "network_observations": [
-      {
-        "observation_id": "obs_0195e6f3",
-        "observed_at": "2025-03-22T16:34:24Z",
-        "first_heard_peer_ip": "172.16.2.66",
-        "src_port": 34690,
-        "geo_country": "BR",
-        "asn": "AS65096",
-        "propagation_delay_ms": -1000
-      }
-    ],
-    "quality_metric": 0.94,
-    "disclaimer": "First-heard peer IP indicates vantage relay observation, NOT cryptographic sender identity."
-  }
-  ```
+## 12. Removed or deferred routes
 
-#### `GET /api/v1/evidence/subgraph/{id}`
-- **Description:** Returns the Neo4j topological neighborhood for Cytoscape.js rendering.
-- **Query Parameters:** `depth` (default 2, max 2), `max_nodes` (default 100).
-- **Response `200 OK`:**
-  ```json
-  {
-    "elements": {
-      "nodes": [
-        {"data": {"id": "ent_9f8e7d6c", "label": "Entity", "type": "entity"}},
-        {"data": {"id": "sbc18d20...", "label": "Address", "type": "address"}},
-        {"data": {"id": "tx_b85038...", "label": "Transaction", "type": "transaction"}},
-        {"data": {"id": "tx_b85038:0", "label": "UTXO", "type": "utxo"}}
-      ],
-      "edges": [
-        {"data": {"source": "ent_9f8e7d6c", "target": "sbc18d20...", "label": "CONTROLS"}},
-        {"data": {"source": "sbc18d20...", "target": "tx_b85038...", "label": "INPUT_OF"}}
-      ]
-    }
-  }
-  ```
+The following are not current routes and must not be added to accommodate stale clients:
 
-#### `GET /api/v1/evidence/compare/{id}`
-- **Description:** Returns the dual-hypothesis comparison for entity `{id}`.
-- **Response `200 OK`:**
-  ```json
-  {
-    "entity_id": "ent_9f8e7d6c",
-    "chain_only_rank": 8,
-    "fused_rank": 2,
-    "rank_shift": 6,
-    "chain_only_score": 0.42,
-    "fused_score": 0.79,
-    "network_contribution": 0.37,
-    "hypothesis_evaluation": "Network propagation dispersion elevates risk priority."
-  }
-  ```
+- `/api/v1/ingest/status`
+- `/api/v1/ingest/bulk`
+- `/api/v1/evidence/compare/{id}`
+- `/api/v1/evidence/subgraph/{id}`
+- `/api/v1/detection/run`
+- `/api/v1/detection/results`
 
----
-
-## 3. Internal Python Intelligence Endpoint (1 Endpoint)
-
-#### `POST /intelligence/score`
-- **Caller:** Go API server (`internal/intelligence/client.go`).
-- **Audience:** Internal microservice (Port 8000). Not accessible from frontend.
-- **Request Body:**
-  ```json
-  {
-    "transactions": [
-      {
-        "txid": "b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b",
-        "amount_btc": 0.74038447,
-        "fee_btc": 0.00105655,
-        "input_count": 1,
-        "output_count": 1,
-        "script_type": "P2PKH",
-        "network_observations": [
-          {
-            "observed_at": "2025-03-22T16:34:24Z",
-            "src_ip": "172.16.2.66",
-            "geo_country": "BR",
-            "asn": "AS65096"
-          }
-        ]
-      }
-    ]
-  }
-  ```
-- **Response `200 OK`:**
-  ```json
-  {
-    "scores": [
-      {
-        "txid": "b85038db8d34756615a8c82752b931ded57f99c1911097b5d0e21f0c648e638b",
-        "chain_score": 0.42,
-        "network_score": 0.88,
-        "mixing_penalty": 0.0,
-        "network_quality_q": 0.94,
-        "fused_score": 0.79,
-        "heuristic_association_strength": 0.81,
-        "flags": ["RAPID_DISPERSION"],
-        "explanation": "High peer dispersion with rapid broadcast across Latin America."
-      }
-    ]
-  }
-  ```
-- **Error Behavior:** If the Python worker fails, it returns `500 Internal Server Error`. Go records the run as `FAILED` and surfaces the error to the analyst, maintaining scientific test integrity without silent fallback.
+The frontend branch currently calls several of these paths and therefore remains integration-incompatible until separately updated.

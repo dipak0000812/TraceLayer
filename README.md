@@ -1,283 +1,104 @@
 # TraceLayer
 
-**SIH Problem Statement:** SIH26146
-**Client:** National Technical Research Organisation (NTRO)
-**Theme:** Blockchain & Cybersecurity
+TraceLayer is an offline-oriented forensic evidence-correlation prototype for the SIH 2026 project SIH26146. It combines synthetic blockchain transactions with independently ingested network observations, correlates them by TXID, resolves deterministic entities, and produces ranked forensic leads.
 
-> AI-Powered Monitoring & Analysis of Bitcoin Transaction Traffic
+## Current Round-2 scope
 
-TraceLayer is an offline forensic evidence-correlation and investigation-support prototype that combines Bitcoin blockchain transaction evidence with Bitcoin P2P network propagation observations, correlates them through TXID, and produces ranked, explainable, uncertainty-aware investigative leads for human analyst review.
+The current implementation includes:
 
-**Core hypothesis:** Does network-layer evidence add useful investigative information beyond blockchain-only analysis?
+- Go domain validation and ingestion.
+- PostgreSQL persistence.
+- Transaction and network observation ingestion.
+- TXID correlation.
+- Deterministic common-input entity resolution.
+- Evidence queries.
+- Fusion, ranking, rank shift, and forensic leads.
+- A separate stateless Python intelligence worker on the intelligence branch.
+- A Next.js frontend on the frontend branch that still requires API reconciliation.
 
----
+Graph storage, evidence subgraphs, runtime enrichment services, and external runtime services are excluded from the current Round-2 runtime.
 
-## What TraceLayer Is NOT
+## Architecture
 
-TraceLayer is a prototype that produces **investigative leads for human review**. It does NOT:
-- Identify real-world persons from addresses
-- Guarantee wallet ownership
-- Prove transaction origin from IP observations
-- Produce calibrated probabilities of criminal activity
-- Make autonomous enforcement decisions
-
-Peer IP observation = network relay evidence only. Address clustering = heuristic only. Scores = NOT calibrated probabilities.
-
----
-
-## Round-2 Scope (What This Prototype Builds)
-
-One complete verifiable vertical slice:
-
-```
-data/raw/  (synthetic CSV/JSON)
-    |-> Go Ingestion + Validation + GeoIP Enrichment
-    |-> PostgreSQL (system of record)
-    |-> TXID Correlation
-    |-> Entity Resolution (Common-Input DSU)
-    |-> Neo4j Evidence Graph (5-node)
-    |-> Python Intelligence Worker (Isolation Forest + peeling/mixing + fusion)
-    |-> Rank Shift Computation (chain-only vs fused)
-    |-> Go REST API (13 endpoints)
-    |-> React/Cytoscape.js Frontend (dashboard, evidence card, link graph)
+```text
+seed-42 raw files -> Go ingestion -> PostgreSQL
+                                  |
+                     TXID correlation and entities
+                                  |
+                       evidence and feature inputs
+                                  |
+                    optional Python intelligence worker
+                                  |
+                          fusion and ranking
+                                  |
+                         forensic leads and REST API
 ```
 
-**Full scope:** `docs/ROUND2_SCOPE.md`
-**Not in Round 2:** live mainnet, Kafka, Redis, Kubernetes, GNN/LLM, real data, cloud infrastructure
+The Go API owns persistence and orchestration. The Python worker receives feature inputs over HTTP and does not connect directly to PostgreSQL.
 
----
+## Seed-42 dataset
 
-## Architecture (Quick Overview)
+Runtime data is under:
 
-```
-Frontend (React+Vite, :3000)
-    |  REST/JSON
-Go API (:8080)
-    |                   |
-PostgreSQL (:5432)   Python FastAPI (:8000, loopback)
-    |
-Neo4j (:7474/:7687)
+```text
+data/synthetic/datasets/seed-42/data/raw/
 ```
 
-**Full architecture:** `docs/ARCHITECTURE.md`
+The manifest identifies dataset `6bc084b677a63411`, generator version `1.0.0`, random seed `42`, 109 transaction records, and 368 network observation records.
 
----
+The files under `data/synthetic/datasets/seed-42/data/eval/` are evaluation-only and must not be consumed by runtime ingestion or intelligence scoring.
 
-## Repository Structure
+## Go API
 
-```
-TraceLayer/
-|-- api/
-|   +-- openapi.yaml              # Normative API contract (13 endpoints)
-|-- cmd/
-|   +-- api/
-|       +-- main.go               # Go API entry point
-|-- docs/
-|   |-- ROUND2_SCOPE.md           # What is in/out of scope
-|   |-- DATA_CONTRACT.md          # Field-level data contracts
-|   |-- API_CONTRACT.md           # Endpoint contracts + examples
-|   |-- ARCHITECTURE.md           # System architecture + data flow
-|   |-- INTEGRATION_CONTRACT.md   # Cross-branch integration guide
-|   +-- OWNERSHIP.md              # Team ownership matrix
-|-- frontend/                     # React+Vite+Cytoscape.js
-|-- intelligence/                 # Python FastAPI worker
-|-- internal/                     # Go packages (to be created)
-|   |-- domain/                   # Shared Go types
-|   |-- ingestion/                # CSV/JSON parsers
-|   |-- correlation/              # TXID join logic
-|   |-- entity/                   # DSU clustering
-|   |-- graph/                    # Neo4j writer
-|   |-- enrichment/geoip/         # Offline GeoIP
-|   |-- ranking/                  # Rank shift computation
-|   +-- intelligence/             # Python HTTP client
-|-- db/
-|   +-- schema.sql                # PostgreSQL DDL (to be created)
-|-- config/
-|   +-- fusion_baseline.json      # Fusion weights (to be created)
-|-- go.mod                        # github.com/dipak0000812/TraceLayer, Go 1.22.2
-|-- docker-compose.yml            # (to be created)
-+-- .env.example                  # Environment template
+The current public routes are:
 
-data/                             # OUTSIDE TraceLayer/ directory
-|-- raw/                          # ONLY inputs to pipeline
-|   |-- bitcoin_traffic.csv       # Combined 14-field format (369 rows)
-|   |-- transactions.csv          # Blockchain only (109 rows)
-|   |-- transactions.json
-|   |-- network_observations.csv  # Network only (369 rows)
-|   +-- network_observations.json
-|-- eval/                         # EVALUATION ONLY - never read by pipeline
-|   |-- ground_truth.json
-|   +-- geoip_fixture.json
-+-- metadata/
-    |-- manifest.json             # dataset_id=6bc084b677a63411, seed=42
-    |-- schema.md
-    +-- validation_report.json
+```text
+GET  /health
+POST /api/v1/ingest/blockchain
+POST /api/v1/ingest/network
+POST /api/v1/correlate
+GET  /api/v1/evidence/{txid}
+GET  /api/v1/leads
+GET  /api/v1/leads/{id}
 ```
 
----
+See `docs/API_CONTRACT.md` and `api/openapi.yaml` for request and response details.
 
-## How to Run Locally
+## Intelligence worker
 
-### Prerequisites
-- Docker + Docker Compose
-- No internet connection required after image pull
+The separate Python worker exposes:
 
-### Steps
-
-```bash
-# 1. Clone and enter TraceLayer directory
-cd TraceLayer
-
-# 2. Copy environment config
-cp .env.example .env
-# Edit .env if needed (defaults work for local dev)
-
-# 3. Start all services
-docker compose up --build -d
-
-# 4. Wait for all services to be healthy
-curl -s http://localhost:8080/api/v1/health | python -m json.tool
-
-# 5. Ingest the seed-42 synthetic dataset
-# Option A: Combined 14-field format
-curl -X POST http://localhost:8080/api/v1/ingest/bulk \
-  -H "Content-Type: text/csv" \
-  --data-binary @../data/raw/bitcoin_traffic.csv
-
-# Option B: Separated feeds
-curl -X POST http://localhost:8080/api/v1/ingest/transactions \
-  -H "Content-Type: text/csv" \
-  --data-binary @../data/raw/transactions.csv
-
-curl -X POST http://localhost:8080/api/v1/ingest/network \
-  -H "Content-Type: text/csv" \
-  --data-binary @../data/raw/network_observations.csv
-
-# 6. Trigger detection run
-RUN_ID=$(curl -s -X POST http://localhost:8080/api/v1/detection/run \
-  -H "Content-Type: application/json" -d '{}' | python -c "import sys,json; print(json.load(sys.stdin)['run_id'])")
-
-# 7. Wait for completion, then view results
-curl -s "http://localhost:8080/api/v1/detection/results?run_id=${RUN_ID}" | python -m json.tool
-
-# 8. View rank shift for an entity
-curl -s http://localhost:8080/api/v1/evidence/compare/<entity_id> | python -m json.tool
-
-# 9. Open frontend
-# http://localhost:3000
+```text
+GET  /health
+POST /intelligence/score
 ```
 
----
+It is stateless, uses a checked-in Isolation Forest model artifact, and receives transaction/network data from Go. It does not connect to PostgreSQL. The current Go boundary sends BTC amounts as floating-point JSON fields to the Python schema, while the Go domain itself uses exact satoshi-based values.
 
-## How to Generate the Seed-42 Dataset
+## Local development
 
-The seed-42 dataset is already committed to `data/`. To regenerate it:
+The checked-out backend requires a reachable PostgreSQL instance and a `DATABASE_URL` environment variable. The API listens on `:8080` by default and can be started with:
 
-```bash
-cd intelligence
-pip install -r requirements.txt
-python generator.py --seed 42 --output-dir ../data
+```text
+go run ./cmd/api
 ```
 
-This must produce `dataset_id = 6bc084b677a63411` in `data/metadata/manifest.json`.
-Checksums are verified against manifest. If they differ, the dataset was not generated correctly.
+The seed-42 files can then be submitted through the two ingestion endpoints before calling `/api/v1/correlate`.
 
-**Do not commit a regenerated dataset to main without Sayali's sign-off.**
+The Python worker is currently on `origin/feature/intelligence`, not integrated into this checked-out branch. The frontend is currently on `origin/feature/frontend` and calls routes that are not present in the current Go router.
 
----
+## Tests
 
-## Where Raw/Evaluation Data Live
+Run the Go tests with:
 
-| Location | Purpose | Pipeline access |
-|---|---|---|
-| data/raw/ | Primary ingestion inputs | YES — read by POST /ingest/* |
-| data/eval/ground_truth.json | Anomaly labels for offline evaluation | NO — evaluation harness only |
-| data/eval/geoip_fixture.json | True GeoIP answers for evaluating enrichment | NO — evaluation harness only |
-| data/metadata/manifest.json | Dataset checksums, record counts, seed | Read at ingestion for dataset_id validation |
+```text
+go test ./...
+```
 
-**The pipeline must NEVER read data/eval/**. Doing so constitutes label leakage.
+The current Go test suite passes in the working tree. This does not verify a containerized deployment, Python integration, frontend integration, or air-gapped execution.
 
----
+## Offline goal and limitations
 
-## How Contracts Work
+The design is intended for local/offline operation: runtime services should use local PostgreSQL, local model artifacts, and local synthetic data. Offline operation has not yet been verified end to end. Build-time dependencies are not currently proven to be available from an offline cache.
 
-There are four contract documents, in authority order:
-
-1. **data/metadata/schema.md** — authoritative field-level description (from generator)
-2. **docs/DATA_CONTRACT.md** — full field contract table for all entities
-3. **docs/API_CONTRACT.md** — endpoint request/response contracts with examples
-4. **api/openapi.yaml** — machine-parseable normative spec
-
-When in conflict, `schema.md` wins for raw field definitions.
-When in conflict between `DATA_CONTRACT.md` and `openapi.yaml`, raise an issue — this is a bug.
-
----
-
-## Team Ownership
-
-| Person | Primary responsibility |
-|---|---|
-| Dipak | Go API, ingestion, PostgreSQL, TXID correlation, fusion orchestration, ranking, OpenAPI, Docker |
-| Aniruddha | Network schema/ingestion, offline GeoIP/ASN enrichment |
-| Aakanksha | Entity resolution (DSU), Neo4j evidence graph |
-| Sayali | Synthetic generator, features, anomaly detection, fusion experiments, evaluation |
-| Pushkar | Frontend (React + Cytoscape.js) |
-| Prachi | Requirements traceability, documentation, demo support |
-
-**Full ownership matrix:** `docs/OWNERSHIP.md`
-
----
-
-## How Branches and PRs Work
-
-| Branch | Owner | Contents |
-|---|---|---|
-| main | All | Integration-tested, working code only |
-| feat/ingestion | Dipak | Go API + ingestion + PostgreSQL |
-| feat/network-enrichment | Aniruddha | GeoIP enrichment package |
-| feat/entity-graph | Aakanksha | DSU + Neo4j |
-| feat/intelligence | Sayali | Python FastAPI worker |
-| feat/frontend | Pushkar | React/Vite frontend |
-| feat/docs-traceability | Prachi | Documentation updates |
-
-**PR rules:**
-- PRs require at least one reviewer
-- PRs that cross branch boundaries (e.g., changing a shared interface) require both owners to approve
-- No PR to main without passing `docker compose up --build` and `/health` returning 200
-- No PR with reads from `data/eval/` in pipeline code
-
-**Merge order:** ingestion -> network-enrichment -> entity-graph -> intelligence -> frontend
-(parallel development is fine; integration testing follows this order)
-
----
-
-## Current Limitations (Round 2)
-
-1. **Synthetic data only.** No real Bitcoin network or seized data.
-2. **No live monitoring.** Ingestion is batch (file upload), not streaming.
-3. **Single-node PostgreSQL.** No replication or partitioning.
-4. **Loopback Python worker.** Not production-scalable; adequate for prototype.
-5. **Uncalibrated scores.** investigative_priority_score is NOT a probability.
-6. **Heuristic entity resolution.** Common-Input-Ownership is a known heuristic with false positives.
-7. **Test IP ranges only.** Synthetic IPs are RFC 5737 / RFC 1918; GeoIP results are from fixture, not real lookup.
-8. **Performance untested.** Latency benchmarks are BENCHMARK-PENDING.
-9. **Single analyst.** No multi-user access control.
-10. **No calibration evaluation.** Precision/recall evaluation against ground truth is offline only.
-
----
-
-## Key Documents
-
-| Document | Purpose |
-|---|---|
-| [docs/ROUND2_SCOPE.md](docs/ROUND2_SCOPE.md) | What is in/out of Round 2; acceptance criteria |
-| [docs/DATA_CONTRACT.md](docs/DATA_CONTRACT.md) | Field-level contracts for all data objects |
-| [docs/API_CONTRACT.md](docs/API_CONTRACT.md) | API endpoint contracts with examples |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture and data flow |
-| [docs/INTEGRATION_CONTRACT.md](docs/INTEGRATION_CONTRACT.md) | Cross-branch integration guide |
-| [docs/OWNERSHIP.md](docs/OWNERSHIP.md) | Team ownership matrix |
-| [api/openapi.yaml](api/openapi.yaml) | Normative OpenAPI 3.0 specification |
-| [data/metadata/schema.md](../data/metadata/schema.md) | Generator-authoritative field schema |
-| [data/metadata/manifest.json](../data/metadata/manifest.json) | Dataset checksums and record counts |
-| [docs/PRD_ROUND2.md](../docs/PRD_ROUND2.md) | Full PRD (reference; DATA_CONTRACT overrides on field detail) |
-
+Known limitations include the lack of one shared database transaction across all `/api/v1/correlate` stages, heuristic fallback when the intelligence worker is unavailable, floating-point amounts at the Go/Python boundary, and frontend API drift.
