@@ -39,3 +39,7 @@ neo4j-data/
 # Generated artifacts
 artifacts/
 reports/
+
+# Intelligence datasets
+intelligence/data/elliptic/
+*.csv
