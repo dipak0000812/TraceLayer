@@ -25,6 +25,10 @@ var requiredNetworkColumns = []string{
 // transaction parser's partial-batch tolerance. Duplicate observation_ids
 // are NOT deduplicated here — that's the storage layer's job.
 func ParseNetworkObservationsCSV(r io.Reader) (valid []domain.NetworkObservation, rejections []RowRejection, err error) {
+	r, err = normalizeInput(r, requiredNetworkColumns)
+	if err != nil {
+		return nil, nil, err
+	}
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 

@@ -1,0 +1,13 @@
+.git
+data
+frontend
+*.md
+.env*
+node_modules
+.next
+__pycache__
+*.pyc
+intelligence/tests
+intelligence/training
+intelligence/evaluation
+intelligence/INTELLIGENCE_INFO.md

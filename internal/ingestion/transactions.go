@@ -33,6 +33,10 @@ var requiredColumns = []string{
 // the batch. Duplicate txids across rows are NOT deduplicated here; that
 // decision needs the database and belongs to Phase 3b.
 func ParseTransactionsCSV(r io.Reader) (valid []domain.Transaction, rejections []RowRejection, err error) {
+	r, err = normalizeInput(r, requiredColumns)
+	if err != nil {
+		return nil, nil, err
+	}
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 

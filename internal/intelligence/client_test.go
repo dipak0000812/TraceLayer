@@ -141,7 +141,7 @@ func TestClient_Score_RejectsEmptyRequest(t *testing.T) {
 
 func TestClient_Score_Timeout(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		<-r.Context().Done()
+		time.Sleep(100 * time.Millisecond)
 	}))
 	defer server.Close()
 

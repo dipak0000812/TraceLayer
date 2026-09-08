@@ -5,10 +5,12 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/dipak0000812/TraceLayer/internal/correlation"
 	"github.com/dipak0000812/TraceLayer/internal/domain"
 	"github.com/dipak0000812/TraceLayer/internal/entity"
+	"github.com/dipak0000812/TraceLayer/internal/intelligence"
 	"github.com/dipak0000812/TraceLayer/internal/ingestion"
 	"github.com/dipak0000812/TraceLayer/internal/ranking"
 	"github.com/dipak0000812/TraceLayer/internal/storage"
@@ -124,7 +126,11 @@ func TestE2E_Seed42_FullPipeline(t *testing.T) {
 		t.Fatalf("entities_clustered = %d, want %d", entityResult.EntitiesClustered, wantEntities)
 	}
 
-	leadsCount, err := ranking.Run(context.Background(), db.Pool(), nil)
+	var intelClient *intelligence.Client
+	if workerURL := os.Getenv("INTELLIGENCE_URL"); workerURL != "" {
+		intelClient = intelligence.NewClient(workerURL, 10*time.Second)
+	}
+	leadsCount, err := ranking.Run(context.Background(), db.Pool(), intelClient)
 	if err != nil {
 		t.Fatalf("ranking.Run: %v", err)
 	}

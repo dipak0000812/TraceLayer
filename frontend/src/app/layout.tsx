@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Activity, Database, Server, Shield, Network } from "lucide-react";
+import { Activity, Database, Server, Shield } from "lucide-react";
 import Link from "next/link";
 import { fetchHealth } from "@/lib/api";
 
@@ -18,7 +18,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // Server-side fetch for health (if down, we can still render)
-  const health = await fetchHealth().catch(() => ({ status: 'DOWN', services: { postgres: 'DOWN', neo4j: 'DOWN', intelligence_worker: 'DOWN' } }));
+  const health = await fetchHealth().catch(() => ({ status: "DOWN", timestamp: "", services: { postgres: "DOWN" } }));
 
   return (
     <html lang="en" className="dark">
@@ -51,14 +51,9 @@ export default async function RootLayout({
               <span className={`w-2 h-2 rounded-full ${health.services?.postgres === 'UP' ? 'bg-primary' : 'bg-destructive'}`}></span>
             </div>
             
-            <div className="flex items-center justify-between mb-1">
-              <span className="flex items-center"><Network className="w-3 h-3 mr-1" /> Neo4j</span>
-              <span className={`w-2 h-2 rounded-full ${health.services?.neo4j === 'UP' ? 'bg-primary' : 'bg-destructive'}`}></span>
-            </div>
-            
             <div className="flex items-center justify-between">
               <span className="flex items-center"><Activity className="w-3 h-3 mr-1" /> Intelligence</span>
-              <span className={`w-2 h-2 rounded-full ${health.services?.intelligence_worker === 'UP' ? 'bg-primary' : 'bg-destructive'}`}></span>
+              <span className="text-muted-foreground">External worker</span>
             </div>
           </div>
         </aside>
