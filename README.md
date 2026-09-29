@@ -209,7 +209,7 @@ The correlation and ranking pipeline is deterministic on purpose — every fused
 
 ## Team
 
-Built for SIH26146 by a three-person team. Dipak: Go backend — domain validation, PostgreSQL persistence, TXID correlation, fusion/ranking pipeline. Teammates: intelligence worker and frontend.
+Built for SIH26146 by a six-person team. Dipak: Go backend — domain validation, PostgreSQL persistence, TXID correlation, fusion/ranking pipeline. Teammates: intelligence worker and frontend.
 
 ## License
 
