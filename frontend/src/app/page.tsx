@@ -1,173 +1,199 @@
-"use client";
-
-import { ChangeEvent, useEffect, useState } from "react";
-import { AlertCircle, ArrowDownRight, ArrowUpRight, Database, Minus, Play, Upload } from "lucide-react";
 import Link from "next/link";
-import {
-  BatchSummary,
-  fetchLeads,
-  Lead,
-  LeadListResponse,
-  triggerCorrelation,
-  uploadBlockchainCsv,
-  uploadNetworkCsv,
-} from "@/lib/api";
+import { ArrowRight } from "lucide-react";
+import { fetchHealth, fetchLeads, DATASET_METADATA, type Lead } from "@/lib/api";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Panel, PanelHeader, EmptyState } from "@/components/ui/States";
+import { Badge, StatusDot } from "@/components/ui/Badge";
+import { HashValue } from "@/components/ui/HashValue";
+import { formatRankShift, formatScore } from "@/lib/format";
 
-function formatUploadResult(result: BatchSummary): string {
-  return `${result.ingested_count} ingested, ${result.duplicate_count} duplicates, ${result.rejected_count} rejected`;
+async function loadOverviewData() {
+  const [leadsResult, healthResult] = await Promise.allSettled([
+    fetchLeads(1, 8, "fused_rank"),
+    fetchHealth(),
+  ]);
+
+  return {
+    leads: leadsResult.status === "fulfilled" ? leadsResult.value : null,
+    leadsError: leadsResult.status === "rejected" ? leadsResult.reason : null,
+    health: healthResult.status === "fulfilled" ? healthResult.value : null,
+  };
 }
 
-export default function Dashboard() {
-  const [leads, setLeads] = useState<LeadListResponse | null>(null);
-  const [loadingLeads, setLoadingLeads] = useState(true);
-  const [loadingIngest, setLoadingIngest] = useState<"blockchain" | "network" | null>(null);
-  const [loadingCorrelate, setLoadingCorrelate] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+function StatCell({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="flex-1 border-r border-border px-5 py-4 last:border-r-0">
+      <div className="text-2xs uppercase tracking-wide text-text-muted">{label}</div>
+      <div className="mt-1 font-mono-tabular text-xl font-semibold text-text">{value}</div>
+      {sub && <div className="mt-0.5 text-2xs text-text-muted">{sub}</div>}
+    </div>
+  );
+}
 
-  async function loadLeads() {
-    try {
-      setLeads(await fetchLeads());
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Failed to load leads");
-    } finally {
-      setLoadingLeads(false);
-    }
-  }
+export default async function OverviewPage() {
+  const { leads, health } = await loadOverviewData();
 
-  useEffect(() => {
-    let cancelled = false;
-    void fetchLeads()
-      .then((result) => {
-        if (!cancelled) setLeads(result);
-      })
-      .catch((cause: unknown) => {
-        if (!cancelled) setError(cause instanceof Error ? cause.message : "Failed to load leads");
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingLeads(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  async function handleUpload(
-    event: ChangeEvent<HTMLInputElement>,
-    kind: "blockchain" | "network",
-  ) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setLoadingIngest(kind);
-    setError("");
-    setNotice("");
-    try {
-      const result = kind === "blockchain"
-        ? await uploadBlockchainCsv(file)
-        : await uploadNetworkCsv(file);
-      setNotice(`${kind === "blockchain" ? "Blockchain" : "Network"} CSV: ${formatUploadResult(result)}.`);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "CSV ingestion failed");
-    } finally {
-      setLoadingIngest(null);
-      event.target.value = "";
-    }
-  }
-
-  async function handleCorrelate() {
-    setLoadingCorrelate(true);
-    setLoadingLeads(true);
-    setError("");
-    setNotice("");
-    try {
-      const result = await triggerCorrelation();
-      setNotice(`${result.status}: ${result.entities_clustered} entities, ${result.leads_generated} leads, ${result.observations_correlated} observations correlated.`);
-      await loadLeads();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Correlation failed");
-    } finally {
-      setLoadingCorrelate(false);
-    }
-  }
+  const sampleEntities = leads ? new Set(leads.leads.map((l) => l.entity_id)).size : 0;
+  const topScore = leads?.leads.reduce((m, l) => Math.max(m, l.fused_score), 0) ?? 0;
+  const avgQuality =
+    leads && leads.leads.length
+      ? leads.leads.reduce((s, l) => s + l.network_evidence_quality, 0) / leads.leads.length
+      : null;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Operations Dashboard</h2>
-        <p className="text-muted-foreground mt-1">Ingest raw observations, run correlation, and review forensic leads.</p>
-      </div>
+    <div>
+      <PageHeader
+        title="Investigation workspace"
+        subtitle={`Benchmark (${DATASET_METADATA.seed}) · ${DATASET_METADATA.provenance.toLowerCase()} · generator v${DATASET_METADATA.generatorVersion}`}
+      />
 
-      {error && (
-        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-md flex items-center">
-          <AlertCircle className="w-5 h-5 mr-2" />
-          {error}
+      <Panel className="mb-6">
+        <div className="flex flex-wrap">
+          <StatCell label="Investigative leads" value={leads ? String(leads.total_leads) : "—"} />
+          <StatCell
+            label="Entities (top ranked)"
+            value={leads ? String(sampleEntities) : "—"}
+            sub="unique entities in current queue"
+          />
+          <StatCell
+            label="Highest fused priority"
+            value={leads ? formatScore(topScore) : "—"}
+          />
+          <StatCell
+            label="Avg. network quality"
+            value={avgQuality !== null ? formatScore(avgQuality) : "—"}
+            sub="across top-ranked leads"
+          />
+          <StatCell
+            label="Intelligence status"
+            value={health ? "Available" : "Unavailable"}
+          />
         </div>
-      )}
-      {notice && <div className="bg-primary/10 border border-primary/30 text-primary px-4 py-3 rounded-md">{notice}</div>}
+      </Panel>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="font-semibold text-lg flex items-center mb-2">
-            <Database className="w-5 h-5 mr-2 text-primary" />
-            Data Pipeline
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">Upload the raw seed-42 CSV or JSON files through the current ingestion endpoints.</p>
-          <div className="space-y-3">
-            <label className="flex items-center justify-between gap-3 border border-border rounded-md px-3 py-2 text-sm cursor-pointer hover:bg-accent">
-              <span className="flex items-center gap-2"><Upload className="w-4 h-4" /> Blockchain data</span>
-              <span>{loadingIngest === "blockchain" ? "Uploading..." : "Choose file"}</span>
-              <input className="sr-only" type="file" accept=".csv,.json,text/csv,application/json" disabled={loadingIngest !== null} onChange={(event) => void handleUpload(event, "blockchain")} />
-            </label>
-            <label className="flex items-center justify-between gap-3 border border-border rounded-md px-3 py-2 text-sm cursor-pointer hover:bg-accent">
-              <span className="flex items-center gap-2"><Upload className="w-4 h-4" /> Network data</span>
-              <span>{loadingIngest === "network" ? "Uploading..." : "Choose file"}</span>
-              <input className="sr-only" type="file" accept=".csv,.json,text/csv,application/json" disabled={loadingIngest !== null} onChange={(event) => void handleUpload(event, "network")} />
-            </label>
+      <Panel className="mb-6">
+        <PanelHeader
+          title="Investigation queue"
+          subtitle="Highest-priority fused leads requiring analyst review"
+          action={
+            <Link
+              href="/leads"
+              className="focus-ring flex items-center gap-1 text-xs font-medium text-accent-strong hover:underline"
+            >
+              View all leads <ArrowRight className="h-3 w-3" />
+            </Link>
+          }
+        />
+        {leads && leads.leads.length > 0 ? (
+          <QueueTable leads={leads.leads} />
+        ) : leads ? (
+          <EmptyState
+            title="No investigative leads yet"
+            description="Ingest blockchain and network evidence, then run correlation to generate ranked leads."
+            actionHref="/ingestion"
+            actionLabel="Go to ingestion"
+          />
+        ) : (
+          <EmptyState
+            title="Leads unavailable"
+            description="The TraceLayer API did not return lead data. Confirm the backend services are running."
+            actionHref="/health"
+            actionLabel="Check system health"
+          />
+        )}
+      </Panel>
+
+      <Panel>
+        <PanelHeader title="Pipeline status" subtitle="Reported service state from the API health check" />
+        {health ? (
+          <div className="divide-y divide-border">
+            <PipelineRow label="API" state="UP" />
+            {Object.entries(health.services).map(([name, state]) => (
+              <PipelineRow key={name} label={name} state={state} />
+            ))}
           </div>
-        </div>
+        ) : (
+          <EmptyState
+            title="TraceLayer API unavailable"
+            description="Start the backend services and retry to see live pipeline status."
+            actionHref="/health"
+            actionLabel="Open system health"
+          />
+        )}
+      </Panel>
+    </div>
+  );
+}
 
-        <div className="bg-card border border-border rounded-lg p-6 flex flex-col justify-between">
-          <div>
-            <h3 className="font-semibold text-lg flex items-center mb-2">
-              <Play className="w-5 h-5 mr-2 text-warning" />
-              Correlation and Ranking
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">Run TXID correlation, entity resolution, intelligence scoring, and lead ranking.</p>
-          </div>
-          <button onClick={() => void handleCorrelate()} disabled={loadingCorrelate} className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-md text-sm font-medium transition-colors disabled:opacity-50">
-            {loadingCorrelate ? "Processing..." : "Run Correlation and Ranking"}
-          </button>
-        </div>
-      </div>
+function QueueTable({ leads }: { leads: Lead[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-border text-left text-2xs uppercase tracking-wide text-text-muted">
+            <th className="px-5 py-2.5 font-medium">Rank</th>
+            <th className="px-5 py-2.5 font-medium">Entity</th>
+            <th className="px-5 py-2.5 font-medium">Primary TXID</th>
+            <th className="px-5 py-2.5 font-medium">Chain</th>
+            <th className="px-5 py-2.5 font-medium">Network</th>
+            <th className="px-5 py-2.5 font-medium">Fused</th>
+            <th className="px-5 py-2.5 font-medium">Δ Rank</th>
+            <th className="px-5 py-2.5 font-medium">Flags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {leads.map((lead) => {
+            const shift = formatRankShift(lead.rank_shift);
+            return (
+              <tr key={lead.lead_id} className="table-row-hover border-b border-border last:border-b-0">
+                <td className="px-5 py-2.5">
+                  <Link href={`/leads/${encodeURIComponent(lead.lead_id)}`} className="focus-ring font-mono-tabular text-text hover:text-accent-strong">
+                    #{lead.fused_rank}
+                  </Link>
+                </td>
+                <td className="px-5 py-2.5 mono-id text-text-secondary">{lead.entity_id}</td>
+                <td className="px-5 py-2.5"><HashValue value={lead.primary_txid} /></td>
+                <td className="px-5 py-2.5 font-mono-tabular text-text-secondary">{formatScore(lead.chain_only_score)}</td>
+                <td className="px-5 py-2.5 font-mono-tabular text-text-secondary">{formatScore(lead.network_score)}</td>
+                <td className="px-5 py-2.5 font-mono-tabular font-medium text-text">{formatScore(lead.fused_score)}</td>
+                <td className="px-5 py-2.5">
+                  <span
+                    className={`font-mono-tabular text-xs ${
+                      shift.tone === "up" ? "text-danger" : shift.tone === "down" ? "text-success" : "text-text-muted"
+                    }`}
+                  >
+                    {shift.label}
+                  </span>
+                </td>
+                <td className="px-5 py-2.5">
+                  <div className="flex flex-wrap gap-1">
+                    {lead.anomaly_flags.slice(0, 2).map((flag) => (
+                      <Badge key={flag} tone="warning">{flag.replace(/_/g, " ")}</Badge>
+                    ))}
+                    {lead.anomaly_flags.length > 2 && (
+                      <Badge tone="neutral">+{lead.anomaly_flags.length - 2}</Badge>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
-      <div className="bg-card border border-border rounded-lg overflow-hidden mt-8">
-        <div className="px-6 py-4 border-b border-border bg-accent/50 flex justify-between items-center">
-          <h3 className="font-semibold">Ranked Investigative Leads</h3>
-          <span className="text-xs text-muted-foreground">{leads ? `${leads.total_leads} total` : "Loading"}</span>
-        </div>
-        {loadingLeads ? <div className="px-6 py-8 text-center text-muted-foreground">Loading leads...</div> : leads?.leads.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-muted-foreground uppercase bg-muted/30 border-b border-border">
-                <tr><th className="px-6 py-3">Rank</th><th className="px-6 py-3">Rank Shift</th><th className="px-6 py-3">Entity ID</th><th className="px-6 py-3">Chain Score</th><th className="px-6 py-3">Fused Score</th><th className="px-6 py-3">Flags</th><th className="px-6 py-3">Action</th></tr>
-              </thead>
-              <tbody>{leads.leads.map((lead: Lead) => (
-                <tr key={lead.lead_id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                  <td className="px-6 py-4 font-mono font-bold">#{lead.fused_rank}</td>
-                  <td className="px-6 py-4">{lead.rank_shift > 0 ? <span className="flex items-center text-destructive"><ArrowUpRight className="w-3 h-3 mr-1" />+{lead.rank_shift}</span> : lead.rank_shift < 0 ? <span className="flex items-center text-primary"><ArrowDownRight className="w-3 h-3 mr-1" />{lead.rank_shift}</span> : <span className="flex items-center text-muted-foreground"><Minus className="w-3 h-3 mr-1" />0</span>}</td>
-                  <td className="px-6 py-4 font-mono text-xs">{lead.entity_id}</td>
-                  <td className="px-6 py-4 font-mono">{lead.chain_only_score.toFixed(2)}</td>
-                  <td className="px-6 py-4 font-mono font-medium">{lead.fused_score.toFixed(2)}</td>
-                  <td className="px-6 py-4"><div className="flex gap-1 flex-wrap">{lead.anomaly_flags.map((flag) => <span key={flag} className="text-[10px] uppercase bg-warning/20 text-warning px-1.5 py-0.5 rounded border border-warning/30">{flag.replace(/_/g, " ")}</span>)}</div></td>
-                  <td className="px-6 py-4"><Link href={`/entity/${encodeURIComponent(lead.lead_id)}`} className="text-primary hover:underline font-medium text-sm">Inspect</Link></td>
-                </tr>
-              ))}</tbody>
-            </table>
-          </div>
-        ) : <div className="px-6 py-8 text-center text-muted-foreground">No leads available. Ingest data and run correlation.</div>}
-      </div>
+function PipelineRow({ label, state }: { label: string; state: string }) {
+  const normalized = state.toUpperCase();
+  const tone = normalized === "UP" || normalized === "HEALTHY" ? "success" : normalized === "DOWN" ? "danger" : "neutral";
+  return (
+    <div className="flex items-center justify-between px-5 py-2.5 text-sm">
+      <span className="capitalize text-text-secondary">{label}</span>
+      <span className="flex items-center gap-1.5">
+        <StatusDot tone={tone} />
+        <span className="font-mono-tabular text-xs text-text">{state}</span>
+      </span>
     </div>
   );
 }
