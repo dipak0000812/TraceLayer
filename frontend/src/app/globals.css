@@ -1,34 +1,89 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #09090b; /* zinc-950 */
-  --color-foreground: #fafafa; /* zinc-50 */
-  --color-card: #18181b; /* zinc-900 */
-  --color-card-foreground: #fafafa;
-  --color-border: #27272a; /* zinc-800 */
-  
-  --color-primary: #10b981; /* emerald-500 */
-  --color-primary-foreground: #022c22;
-  
-  --color-destructive: #ef4444; /* red-500 */
-  --color-destructive-foreground: #fef2f2;
-  
-  --color-warning: #f59e0b; /* amber-500 */
-  --color-warning-foreground: #fffbeb;
-  
-  --color-muted: #27272a; /* zinc-800 */
-  --color-muted-foreground: #a1a1aa; /* zinc-400 */
-  
-  --color-accent: #27272a;
-  --color-accent-foreground: #fafafa;
+  /* Foundation */
+  --color-bg: #0a0b0d;
+  --color-bg-raised: #101114;
+  --color-surface: #131519;
+  --color-surface-hover: #191c21;
+  --color-surface-active: #1e2127;
+  --color-border: #23262c;
+  --color-border-strong: #33373f;
+
+  /* Text */
+  --color-text: #eceef1;
+  --color-text-secondary: #a3a9b3;
+  --color-text-muted: #676d78;
+
+  /* Single controlled accent */
+  --color-accent: #5b7cfa;
+  --color-accent-strong: #7593ff;
+  --color-accent-muted: #1c2338;
+
+  /* Semantic status */
+  --color-success: #3fb97c;
+  --color-success-muted: #12261d;
+  --color-warning: #d9a53f;
+  --color-warning-muted: #2a2214;
+  --color-danger: #e5555f;
+  --color-danger-muted: #2b1618;
+  --color-info: #5b7cfa;
+
+  /* Type — system stacks only: this is an offline tool, so the UI never
+     depends on a network fetch (including web fonts) to render correctly. */
+  --font-sans: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+
+  --text-2xs: 0.6875rem;
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
   }
+  html {
+    color-scheme: dark;
+  }
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+  }
+  ::selection {
+    background-color: var(--color-accent-muted);
+    color: var(--color-text);
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 8px;
+    border: 2px solid var(--color-bg);
+  }
+}
+
+@layer utilities {
+  .font-mono-tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .mono-id {
+    font-family: var(--font-mono);
+    letter-spacing: -0.01em;
+  }
+  .table-row-hover {
+    transition: background-color 120ms ease;
+  }
+  .table-row-hover:hover {
+    background-color: var(--color-surface-hover);
+  }
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
   }
 }
