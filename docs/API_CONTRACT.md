@@ -39,13 +39,21 @@ Current response shape:
   "timestamp": "2026-09-07T00:00:00Z",
   "services": {
     "postgres": "UP",
-    "intelligence_worker": "NOT_IMPLEMENTED",
-    "neo4j": "NOT_IMPLEMENTED"
+    "intelligence_worker": "UP"
   }
 }
 ```
 
-The `neo4j` key is a legacy diagnostic emitted by the current handler and does not represent a current dependency. The worker key is also diagnostic; the current Go health handler does not actively probe the separate Python service. The route returns `200` when PostgreSQL is healthy and `503` when it is unavailable.
+The `intelligence_worker` field reflects a live probe of `INTELLIGENCE_URL/health`. Possible values:
+
+- `UP` — worker is reachable and the model is loaded.
+- `MODEL_NOT_LOADED` — worker responded but `model_loaded` is false.
+- `UNREACHABLE` — network error or non-2xx response.
+- `NOT_CONFIGURED` — `INTELLIGENCE_URL` environment variable is unset.
+
+The `neo4j` key has been removed. Neo4j is not part of the Round-2 architecture.
+
+The route returns `200` when PostgreSQL is healthy and `503` when it is unavailable. The intelligence worker state does not affect the HTTP status code — a degraded worker is reported informationally.
 
 ## 3. Blockchain ingestion
 
